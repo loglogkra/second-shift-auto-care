@@ -1,33 +1,56 @@
 @page "/admin/requests"
+@inject HttpClient Http
 <PageTitle>Admin Requests</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">Admin Requests</MudText>
-<MudAlert Severity="Severity.Info">Request persistence will be wired to Azure SQL in a future migration.</MudAlert>
-<MudTable Items="SampleRequests">
-    <HeaderContent>
-        <MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Status</MudTh><MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd>@context.CustomerName</MudTd>
-        <MudTd>@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
-        <MudTd>@context.ServiceType</MudTd>
-        <MudTd>@context.Status</MudTd>
-        <MudTd><MudLink Href="@($"/admin/requests/{context.Id}")">View</MudLink></MudTd>
-    </RowTemplate>
-</MudTable>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+}
+else
+{
+    <MudTable Items="Requests" Hover="true">
+        <HeaderContent>
+            <MudTh>Status</MudTh><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Status</MudTd>
+            <MudTd>@context.CustomerName</MudTd>
+            <MudTd>@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
+            <MudTd>@context.ServiceType</MudTd>
+            <MudTd>@context.CreatedAtUtc?.ToLocalTime().ToString("g")</MudTd>
+            <MudTd><MudLink Href="@($"/admin/requests/{context.Id}")">View</MudLink></MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText>No service requests yet.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+}
 
 @code {
-    private static readonly ServiceRequestDto[] SampleRequests =
-    [
-        new()
+    private List<ServiceRequestDto> Requests { get; set; } = [];
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
         {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            CustomerName = "Sample Customer",
-            VehicleYear = 2016,
-            VehicleMake = "Honda",
-            VehicleModel = "Civic",
-            ServiceType = "General Diagnosis",
-            Status = "New"
+            var requests = await Http.GetFromJsonAsync<List<ServiceRequestDto>>("api/admin/service-requests");
+            Requests = requests?.OrderByDescending(request => request.CreatedAtUtc).ToList() ?? [];
         }
-    ];
+        catch (HttpRequestException)
+        {
+            _errorMessage = "Unable to load service requests. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
 }

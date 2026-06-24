@@ -34,7 +34,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequests))]
     public async Task<HttpResponseData> GetServiceRequests(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "admin/service-requests")] HttpRequestData request)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
     {
         var serviceRequests = await repository.GetAllAsync();
         var response = request.CreateResponse(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequestById))]
     public async Task<HttpResponseData> GetServiceRequestById(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
         Guid id)
     {
         var serviceRequest = await repository.GetByIdAsync(id);
@@ -56,7 +56,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
         Guid id)
     {
         var update = await request.ReadFromJsonAsync<ServiceRequestStatusUpdateModel>();
@@ -84,7 +84,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestQuote))]
     public async Task<HttpResponseData> UpdateServiceRequestQuote(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
         Guid id)
     {
         var update = await request.ReadFromJsonAsync<ServiceRequestQuoteUpdateModel>();
@@ -99,7 +99,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
-        var serviceRequest = await repository.UpdateQuoteAsync(id, update.QuoteAmount, update.QuoteNotes);
+        var serviceRequest = await repository.UpdateQuoteAsync(id, update.EstimateLow, update.EstimateHigh, update.PartsNeeded);
         return serviceRequest is null
             ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
             : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
@@ -107,7 +107,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestNotes))]
     public async Task<HttpResponseData> UpdateServiceRequestNotes(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
         Guid id)
     {
         var update = await request.ReadFromJsonAsync<ServiceRequestNotesUpdateModel>();

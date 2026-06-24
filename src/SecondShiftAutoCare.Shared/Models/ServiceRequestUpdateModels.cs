@@ -4,22 +4,25 @@ namespace SecondShiftAutoCare.Shared.Models;
 
 public sealed class ServiceRequestStatusUpdateModel
 {
-    [Required, StringLength(40)]
+    [Required, StringLength(50)]
     public string Status { get; set; } = string.Empty;
 }
 
 public sealed class ServiceRequestQuoteUpdateModel
 {
     [Range(typeof(decimal), "0", "999999.99")]
-    public decimal? QuoteAmount { get; set; }
+    public decimal? EstimateLow { get; set; }
 
-    [StringLength(2000)]
-    public string? QuoteNotes { get; set; }
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? EstimateHigh { get; set; }
+
+    [StringLength(1000)]
+    public string? PartsNeeded { get; set; }
 }
 
 public sealed class ServiceRequestNotesUpdateModel
 {
-    [StringLength(4000)]
+    [StringLength(2000)]
     public string? InternalNotes { get; set; }
 }
 

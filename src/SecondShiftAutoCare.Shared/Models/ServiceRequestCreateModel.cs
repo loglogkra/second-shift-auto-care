@@ -8,25 +8,25 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [Display(Name = "Customer name")]
     public string CustomerName { get; set; } = string.Empty;
 
-    [Required, Phone, StringLength(25)]
+    [Required, Phone, StringLength(30)]
     public string Phone { get; set; } = string.Empty;
 
-    [EmailAddress, StringLength(254)]
+    [EmailAddress, StringLength(150)]
     public string? Email { get; set; }
 
     [Required, Range(1900, 2100)]
     [Display(Name = "Vehicle year")]
     public int? VehicleYear { get; set; }
 
-    [Required, StringLength(60)]
+    [Required, StringLength(75)]
     [Display(Name = "Vehicle make")]
     public string VehicleMake { get; set; } = string.Empty;
 
-    [Required, StringLength(60)]
+    [Required, StringLength(75)]
     [Display(Name = "Vehicle model")]
     public string VehicleModel { get; set; } = string.Empty;
 
-    [Required, Range(0, 999999)]
+    [Range(0, 999999)]
     public int? Mileage { get; set; }
 
     [Required]
@@ -36,13 +36,9 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [Required, StringLength(2000, MinimumLength = 10)]
     public string Symptoms { get; set; } = string.Empty;
 
-    [Required, StringLength(500)]
+    [StringLength(500)]
     [Display(Name = "Preferred availability")]
-    public string PreferredAvailability { get; set; } = string.Empty;
-
-    [Range(typeof(bool), "true", "true", ErrorMessage = "Please confirm that Second Shift Auto Care may contact you about this request.")]
-    [Display(Name = "Consent checkbox")]
-    public bool ConsentAccepted { get; set; }
+    public string? PreferredAvailability { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -63,7 +59,6 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
         Mileage = Mileage,
         ServiceType = ServiceType,
         Symptoms = Symptoms,
-        PreferredAvailability = PreferredAvailability,
-        ConsentAccepted = ConsentAccepted
+        PreferredAvailability = PreferredAvailability
     };
 }

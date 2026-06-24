@@ -23,7 +23,7 @@ public sealed class ServiceRequestRepository
             INSERT INTO dbo.ServiceRequests
             (
                 Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                ServiceType, Symptoms, PreferredAvailability, ConsentAccepted, SubmittedAt, Status
+                ServiceType, Symptoms, PreferredAvailability, Status
             )
             OUTPUT
                 inserted.Id,
@@ -37,21 +37,20 @@ public sealed class ServiceRequestRepository
                 inserted.ServiceType,
                 inserted.Symptoms,
                 inserted.PreferredAvailability,
-                inserted.ConsentAccepted,
-                inserted.SubmittedAt,
                 inserted.Status,
-                inserted.QuoteAmount,
-                inserted.QuoteNotes,
+                inserted.EstimateLow,
+                inserted.EstimateHigh,
+                inserted.PartsNeeded,
                 inserted.InternalNotes,
-                inserted.UpdatedAt
+                inserted.CreatedAtUtc,
+                inserted.UpdatedAtUtc
             VALUES
             (
                 @Id, @CustomerName, @Phone, @Email, @VehicleYear, @VehicleMake, @VehicleModel, @Mileage,
-                @ServiceType, @Symptoms, @PreferredAvailability, @ConsentAccepted, @SubmittedAt, @Status
+                @ServiceType, @Symptoms, @PreferredAvailability, @Status
             );
             """;
 
-        var now = DateTimeOffset.UtcNow;
         var parameters = new
         {
             Id = request.Id ?? Guid.NewGuid(),
@@ -65,8 +64,6 @@ public sealed class ServiceRequestRepository
             request.ServiceType,
             request.Symptoms,
             request.PreferredAvailability,
-            request.ConsentAccepted,
-            SubmittedAt = now,
             Status = ServiceRequestStatuses.New
         };
 
@@ -78,10 +75,10 @@ public sealed class ServiceRequestRepository
     {
         const string sql = """
             SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, ConsentAccepted, SubmittedAt, Status,
-                   QuoteAmount, QuoteNotes, InternalNotes, UpdatedAt
+                   ServiceType, Symptoms, PreferredAvailability, Status,
+                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
             FROM dbo.ServiceRequests
-            ORDER BY SubmittedAt DESC;
+            ORDER BY CreatedAtUtc DESC;
             """;
 
         using var connection = CreateConnection();
@@ -93,8 +90,8 @@ public sealed class ServiceRequestRepository
     {
         const string sql = """
             SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, ConsentAccepted, SubmittedAt, Status,
-                   QuoteAmount, QuoteNotes, InternalNotes, UpdatedAt
+                   ServiceType, Symptoms, PreferredAvailability, Status,
+                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
             FROM dbo.ServiceRequests
             WHERE Id = @Id;
             """;
@@ -108,28 +105,29 @@ public sealed class ServiceRequestRepository
         """
         UPDATE dbo.ServiceRequests
         SET Status = @Status,
-            UpdatedAt = SYSUTCDATETIME()
+            UpdatedAtUtc = SYSUTCDATETIME()
         WHERE Id = @Id;
         """,
         new { Id = id, Status = status });
 
-    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, decimal? quoteAmount, string? quoteNotes) => UpdateAsync(
+    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, decimal? estimateLow, decimal? estimateHigh, string? partsNeeded) => UpdateAsync(
         id,
         """
         UPDATE dbo.ServiceRequests
-        SET QuoteAmount = @QuoteAmount,
-            QuoteNotes = @QuoteNotes,
-            UpdatedAt = SYSUTCDATETIME()
+        SET EstimateLow = @EstimateLow,
+            EstimateHigh = @EstimateHigh,
+            PartsNeeded = @PartsNeeded,
+            UpdatedAtUtc = SYSUTCDATETIME()
         WHERE Id = @Id;
         """,
-        new { Id = id, QuoteAmount = quoteAmount, QuoteNotes = quoteNotes });
+        new { Id = id, EstimateLow = estimateLow, EstimateHigh = estimateHigh, PartsNeeded = partsNeeded });
 
     public Task<ServiceRequestDto?> UpdateNotesAsync(Guid id, string? internalNotes) => UpdateAsync(
         id,
         """
         UPDATE dbo.ServiceRequests
         SET InternalNotes = @InternalNotes,
-            UpdatedAt = SYSUTCDATETIME()
+            UpdatedAtUtc = SYSUTCDATETIME()
         WHERE Id = @Id;
         """,
         new { Id = id, InternalNotes = internalNotes });
@@ -145,8 +143,8 @@ public sealed class ServiceRequestRepository
 
         const string selectSql = """
             SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, ConsentAccepted, SubmittedAt, Status,
-                   QuoteAmount, QuoteNotes, InternalNotes, UpdatedAt
+                   ServiceType, Symptoms, PreferredAvailability, Status,
+                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
             FROM dbo.ServiceRequests
             WHERE Id = @Id;
             """;
