@@ -40,5 +40,9 @@ public sealed class ServiceRequestDto
     public bool ConsentAccepted { get; set; }
 
     public DateTimeOffset? SubmittedAt { get; set; }
-    public string Status { get; set; } = "New";
+    public string Status { get; set; } = ServiceRequestStatuses.New;
+    public decimal? QuoteAmount { get; set; }
+    public string? QuoteNotes { get; set; }
+    public string? InternalNotes { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 }
