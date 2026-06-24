@@ -1,0 +1,11 @@
+# Azure Functions local configuration can contain secrets.
+local.settings.json
+**/local.settings.json
+
+# Build outputs
+bin/
+obj/
+
+# IDE files
+.vs/
+.vscode/

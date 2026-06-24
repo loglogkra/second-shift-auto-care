@@ -1,43 +1,78 @@
 @page "/request-service"
+@inject HttpClient Http
 @inject NavigationManager Navigation
 <PageTitle>Request Service</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">Request Service</MudText>
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
+}
 <EditForm Model="Model" OnValidSubmit="SubmitAsync">
     <DataAnnotationsValidator />
     <MudGrid>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" /></MudItem>
-        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.VehicleYear" Label="Vehicle year" For="@(() => Model.VehicleYear)" Required="true" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleMake" Label="Vehicle make" For="@(() => Model.VehicleMake)" Required="true" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleModel" Label="Vehicle model" For="@(() => Model.VehicleModel)" Required="true" /></MudItem>
-        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage" For="@(() => Model.Mileage)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.VehicleYear" Label="Vehicle year" For="@(() => Model.VehicleYear)" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleMake" Label="Vehicle make" For="@(() => Model.VehicleMake)" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleModel" Label="Vehicle model" For="@(() => Model.VehicleModel)" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage (optional)" For="@(() => Model.Mileage)" Disabled="_isSubmitting" /></MudItem>
         <MudItem xs="12" md="6">
-            <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true">
+            <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true" Disabled="_isSubmitting">
                 @foreach (var serviceType in ServiceTypeOptions.All)
                 {
                     <MudSelectItem Value="@serviceType">@serviceType</MudSelectItem>
                 }
             </MudSelect>
         </MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms" For="@(() => Model.Symptoms)" Lines="5" Required="true" /></MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" For="@(() => Model.PreferredAvailability)" Required="true" /></MudItem>
-        <MudItem xs="12"><MudCheckBox @bind-Checked="Model.ConsentAccepted" Label="I consent to being contacted about this service request." For="@(() => Model.ConsentAccepted)" /></MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms" For="@(() => Model.Symptoms)" Lines="5" Required="true" Disabled="_isSubmitting" /></MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" /></MudItem>
         <MudItem xs="12">
             <ValidationSummary />
-            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Submit request</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Disabled="_isSubmitting">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" />
+                    <span>Submitting...</span>
+                }
+                else
+                {
+                    <span>Submit request</span>
+                }
+            </MudButton>
         </MudItem>
     </MudGrid>
 </EditForm>
 
 @code {
     private ServiceRequestCreateModel Model { get; } = new();
+    private bool _isSubmitting;
+    private string? _errorMessage;
 
-    private Task SubmitAsync()
+    private async Task SubmitAsync()
     {
-        // TODO: POST Model.ToDto() to the Azure Functions API once persistence is implemented.
-        Navigation.NavigateTo("/request-submitted");
-        return Task.CompletedTask;
+        _isSubmitting = true;
+        _errorMessage = null;
+
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/service-requests", Model.ToDto());
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/request-submitted");
+                return;
+            }
+
+            _errorMessage = "We could not submit your request right now. Please check your information and try again.";
+        }
+        catch (HttpRequestException)
+        {
+            _errorMessage = "We could not reach the service request API. Please try again in a few minutes.";
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
     }
 }

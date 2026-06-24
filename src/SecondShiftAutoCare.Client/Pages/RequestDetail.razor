@@ -1,10 +1,150 @@
 @page "/admin/requests/{RequestId:guid}"
+@inject HttpClient Http
 <PageTitle>Request Detail</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">Request Detail</MudText>
-<MudAlert Severity="Severity.Info">Details for request @RequestId will load from the Azure Functions API.</MudAlert>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+}
+else if (_request is not null)
+{
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">@_successMessage</MudAlert>
+    }
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6">@_request.CustomerName</MudText>
+        <MudText>@_request.Phone @(!string.IsNullOrWhiteSpace(_request.Email) ? $"• {_request.Email}" : string.Empty)</MudText>
+        <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
+        <MudText>@_request.ServiceType</MudText>
+        <MudText>@_request.Symptoms</MudText>
+        <MudText>Availability: @_request.PreferredAvailability</MudText>
+    </MudPaper>
+
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" GutterBottom="true">Status</MudText>
+                <MudSelect @bind-Value="_statusModel.Status" Label="Status" Disabled="_isSaving">
+                    @foreach (var status in ServiceRequestStatuses.All)
+                    {
+                        <MudSelectItem Value="@status">@status</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveStatusAsync" Disabled="_isSaving">Save status</MudButton>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" GutterBottom="true">Quote</MudText>
+                <MudNumericField @bind-Value="_quoteModel.EstimateLow" Label="Estimate low" Disabled="_isSaving" />
+                <MudNumericField @bind-Value="_quoteModel.EstimateHigh" Label="Estimate high" Disabled="_isSaving" />
+                <MudTextField @bind-Value="_quoteModel.PartsNeeded" Label="Parts needed" Lines="4" Disabled="_isSaving" />
+                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving">Save quote</MudButton>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" GutterBottom="true">Internal notes</MudText>
+                <MudTextField @bind-Value="_notesModel.InternalNotes" Label="Internal notes" Lines="7" Disabled="_isSaving" />
+                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveNotesAsync" Disabled="_isSaving">Save notes</MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
 
 @code {
     [Parameter]
     public Guid RequestId { get; set; }
+
+    private ServiceRequestDto? _request;
+    private ServiceRequestStatusUpdateModel _statusModel = new();
+    private ServiceRequestQuoteUpdateModel _quoteModel = new();
+    private ServiceRequestNotesUpdateModel _notesModel = new();
+    private bool _isLoading = true;
+    private bool _isSaving;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _request = await Http.GetFromJsonAsync<ServiceRequestDto>($"api/admin/service-requests/{RequestId}");
+            if (_request is null)
+            {
+                _errorMessage = "Service request was not found.";
+                return;
+            }
+
+            ResetModels();
+        }
+        catch (HttpRequestException)
+        {
+            _errorMessage = "Unable to load this service request. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SaveStatusAsync() => await SaveAsync("status", _statusModel, "Status updated.");
+
+    private async Task SaveQuoteAsync() => await SaveAsync("quote", _quoteModel, "Quote updated.");
+
+    private async Task SaveNotesAsync() => await SaveAsync("notes", _notesModel, "Notes updated.");
+
+    private async Task SaveAsync<T>(string segment, T model, string successMessage)
+    {
+        _isSaving = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/admin/service-requests/{RequestId}/{segment}", model);
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorMessage = "Unable to save changes. Please review the request and try again.";
+                return;
+            }
+
+            _request = await response.Content.ReadFromJsonAsync<ServiceRequestDto>();
+            ResetModels();
+            _successMessage = successMessage;
+        }
+        catch (HttpRequestException)
+        {
+            _errorMessage = "Unable to reach the service request API. Please try again.";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void ResetModels()
+    {
+        if (_request is null)
+        {
+            return;
+        }
+
+        _statusModel = new ServiceRequestStatusUpdateModel { Status = _request.Status };
+        _quoteModel = new ServiceRequestQuoteUpdateModel
+        {
+            EstimateLow = _request.EstimateLow,
+            EstimateHigh = _request.EstimateHigh,
+            PartsNeeded = _request.PartsNeeded
+        };
+        _notesModel = new ServiceRequestNotesUpdateModel { InternalNotes = _request.InternalNotes };
+    }
 }

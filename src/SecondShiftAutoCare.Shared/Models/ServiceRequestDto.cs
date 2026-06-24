@@ -9,40 +9,47 @@ public sealed class ServiceRequestDto
     [Required, StringLength(100)]
     public string CustomerName { get; set; } = string.Empty;
 
-    [Required, Phone, StringLength(25)]
+    [Required, Phone, StringLength(30)]
     public string Phone { get; set; } = string.Empty;
 
-    [EmailAddress, StringLength(254)]
+    [EmailAddress, StringLength(150)]
     public string? Email { get; set; }
 
-    [Range(1900, 2100)]
+    [Required, Range(1900, 2100)]
     public int? VehicleYear { get; set; }
 
-    [Required, StringLength(60)]
+    [Required, StringLength(75)]
     public string VehicleMake { get; set; } = string.Empty;
 
-    [Required, StringLength(60)]
+    [Required, StringLength(75)]
     public string VehicleModel { get; set; } = string.Empty;
 
     [Range(0, 999999)]
     public int? Mileage { get; set; }
 
-    [Required, StringLength(80)]
+    [Required, StringLength(75)]
     public string ServiceType { get; set; } = string.Empty;
 
     [Required, StringLength(2000)]
     public string Symptoms { get; set; } = string.Empty;
 
-    [Required, StringLength(500)]
-    public string PreferredAvailability { get; set; } = string.Empty;
+    [StringLength(500)]
+    public string? PreferredAvailability { get; set; }
 
-    [Range(typeof(bool), "true", "true", ErrorMessage = "Consent is required before submitting a request.")]
-    public bool ConsentAccepted { get; set; }
-
-    public DateTimeOffset? SubmittedAt { get; set; }
     public string Status { get; set; } = ServiceRequestStatuses.New;
-    public decimal? QuoteAmount { get; set; }
-    public string? QuoteNotes { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? EstimateLow { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? EstimateHigh { get; set; }
+
+    [StringLength(1000)]
+    public string? PartsNeeded { get; set; }
+
+    [StringLength(2000)]
     public string? InternalNotes { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
+
+    public DateTime? CreatedAtUtc { get; set; }
+    public DateTime? UpdatedAtUtc { get; set; }
 }
