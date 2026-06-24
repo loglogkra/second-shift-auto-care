@@ -1,0 +1,33 @@
+@page "/admin/requests"
+<PageTitle>Admin Requests</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Admin Requests</MudText>
+<MudAlert Severity="Severity.Info">Request persistence will be wired to Azure SQL in a future migration.</MudAlert>
+<MudTable Items="SampleRequests">
+    <HeaderContent>
+        <MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Status</MudTh><MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.CustomerName</MudTd>
+        <MudTd>@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
+        <MudTd>@context.ServiceType</MudTd>
+        <MudTd>@context.Status</MudTd>
+        <MudTd><MudLink Href="@($"/admin/requests/{context.Id}")">View</MudLink></MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private static readonly ServiceRequestDto[] SampleRequests =
+    [
+        new()
+        {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            CustomerName = "Sample Customer",
+            VehicleYear = 2016,
+            VehicleMake = "Honda",
+            VehicleModel = "Civic",
+            ServiceType = "General Diagnosis",
+            Status = "New"
+        }
+    ];
+}

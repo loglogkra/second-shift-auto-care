@@ -1,0 +1,2 @@
+-- Placeholder migration for Azure SQL request persistence.
+-- Future migrations should create the ServiceRequests table and supporting indexes.

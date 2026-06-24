@@ -1,0 +1,10 @@
+@page "/admin/requests/{RequestId:guid}"
+<PageTitle>Request Detail</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Request Detail</MudText>
+<MudAlert Severity="Severity.Info">Details for request @RequestId will load from the Azure Functions API.</MudAlert>
+
+@code {
+    [Parameter]
+    public Guid RequestId { get; set; }
+}
