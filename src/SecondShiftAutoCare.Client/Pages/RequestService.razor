@@ -1,0 +1,43 @@
+@page "/request-service"
+@inject NavigationManager Navigation
+<PageTitle>Request Service</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Request Service</MudText>
+<EditForm Model="Model" OnValidSubmit="SubmitAsync">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" /></MudItem>
+        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.VehicleYear" Label="Vehicle year" For="@(() => Model.VehicleYear)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleMake" Label="Vehicle make" For="@(() => Model.VehicleMake)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleModel" Label="Vehicle model" For="@(() => Model.VehicleModel)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage" For="@(() => Model.Mileage)" Required="true" /></MudItem>
+        <MudItem xs="12" md="6">
+            <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true">
+                @foreach (var serviceType in ServiceTypeOptions.All)
+                {
+                    <MudSelectItem Value="@serviceType">@serviceType</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms" For="@(() => Model.Symptoms)" Lines="5" Required="true" /></MudItem>
+        <MudItem xs="12"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" For="@(() => Model.PreferredAvailability)" Required="true" /></MudItem>
+        <MudItem xs="12"><MudCheckBox @bind-Checked="Model.ConsentAccepted" Label="I consent to being contacted about this service request." For="@(() => Model.ConsentAccepted)" /></MudItem>
+        <MudItem xs="12">
+            <ValidationSummary />
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Submit request</MudButton>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+@code {
+    private ServiceRequestCreateModel Model { get; } = new();
+
+    private Task SubmitAsync()
+    {
+        // TODO: POST Model.ToDto() to the Azure Functions API once persistence is implemented.
+        Navigation.NavigateTo("/request-submitted");
+        return Task.CompletedTask;
+    }
+}

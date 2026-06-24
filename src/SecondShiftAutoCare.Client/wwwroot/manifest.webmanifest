@@ -1,0 +1,9 @@
+{
+  "name": "Second Shift Auto Care",
+  "short_name": "Second Shift",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": []
+}

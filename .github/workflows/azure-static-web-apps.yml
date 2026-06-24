@@ -1,0 +1,2 @@
+# Placeholder workflow for Azure Static Web Apps CI/CD.
+# Configure app_location as src/SecondShiftAutoCare.Client and api_location as src/SecondShiftAutoCare.Api when provisioning Azure.
