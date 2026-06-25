@@ -27,8 +27,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         var created = await repository.CreateAsync(serviceRequest);
         var response = request.CreateResponse(HttpStatusCode.Created);
         response.Headers.Add("Location", $"/api/admin/service-requests/{created.Id}");
-        await response.WriteAsJsonAsync(created);
-        response.StatusCode = HttpStatusCode.Created;
+        await response.WriteAsJsonAsync(created, HttpStatusCode.Created);
         return response;
     }
 
@@ -38,8 +37,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     {
         var serviceRequests = await repository.GetAllAsync();
         var response = request.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(serviceRequests);
-        response.StatusCode = HttpStatusCode.OK;
+        await response.WriteAsJsonAsync(serviceRequests, HttpStatusCode.OK);
         return response;
     }
 
@@ -144,8 +142,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     private static async Task<HttpResponseData> WriteJsonAsync<T>(HttpRequestData request, HttpStatusCode statusCode, T body)
     {
         var response = request.CreateResponse(statusCode);
-        await response.WriteAsJsonAsync(body);
-        response.StatusCode = statusCode;
+        await response.WriteAsJsonAsync(body, statusCode);
         return response;
     }
 }
