@@ -1,7 +1,21 @@
 @page "/request-submitted"
 <PageTitle>Request Submitted</PageTitle>
 
-<MudPaper Class="pa-6">
-    <MudText Typo="Typo.h4" GutterBottom="true">Request submitted</MudText>
-    <MudText>Thanks for contacting Second Shift Auto Care. We will review your request and follow up using the contact details provided.</MudText>
-</MudPaper>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" md="8" lg="7">
+        <MudPaper Class="pa-5 pa-md-8 submitted-card text-center" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="submitted-icon" />
+            <MudText Typo="Typo.h4" GutterBottom="true">Request submitted</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4">
+                Thanks for contacting 2nd Shift Auto Care. We will review your request and follow up using the contact details provided.
+            </MudText>
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mb-5">
+                Your request is in the queue for after-hours and weekend service review in Zeeland / West Michigan.
+            </MudAlert>
+            <MudStack Row="true" Justify="Justify.Center" Spacing="2" Class="flex-wrap">
+                <MudButton Href="/" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Home">Back Home</MudButton>
+                <MudButton Href="/request-service" Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Add">Submit Another</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>

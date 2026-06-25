@@ -2,11 +2,18 @@
 @inject HttpClient Http
 <PageTitle>Request Detail</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Request Detail</MudText>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
+    <MudButton Href="/admin/requests" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack">Back to board</MudButton>
+    <MudSpacer />
+    @if (_request is not null)
+    {
+        <MudChip T="string" Color="GetStatusColor(_request.Status)" Variant="Variant.Filled">@_request.Status</MudChip>
+    }
+</MudStack>
 
 @if (_isLoading)
 {
-    <MudProgressCircular Indeterminate="true" />
+    <MudPaper Class="pa-6 text-center" Elevation="0"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /><MudText Class="mt-3">Loading request...</MudText></MudPaper>
 }
 else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
@@ -19,43 +26,72 @@ else if (_request is not null)
         <MudAlert Severity="Severity.Success" Class="mb-4">@_successMessage</MudAlert>
     }
 
-    <MudPaper Class="pa-4 mb-4">
-        <MudText Typo="Typo.h6">@_request.CustomerName</MudText>
-        <MudText>@_request.Phone @(!string.IsNullOrWhiteSpace(_request.Email) ? $"• {_request.Email}" : string.Empty)</MudText>
-        <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
-        <MudText>@_request.ServiceType</MudText>
-        <MudText>@_request.Symptoms</MudText>
-        <MudText>Availability: @_request.PreferredAvailability</MudText>
-    </MudPaper>
+    <MudGrid Spacing="4">
+        <MudItem xs="12" lg="5">
+            <MudCard Elevation="0" Class="detail-card">
+                <MudCardContent>
+                    <MudText Typo="Typo.overline" Color="Color.Primary">Customer request</MudText>
+                    <MudText Typo="Typo.h4" GutterBottom="true">@_request.CustomerName</MudText>
+                    <MudStack Spacing="2">
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Phone">@_request.Phone @(!string.IsNullOrWhiteSpace(_request.Email) ? $"• {_request.Email}" : string.Empty)</MudAlert>
+                        <MudPaper Class="pa-3 info-panel" Elevation="0">
+                            <MudText Typo="Typo.subtitle2">Vehicle</MudText>
+                            <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
+                        </MudPaper>
+                        <MudPaper Class="pa-3 info-panel" Elevation="0">
+                            <MudText Typo="Typo.subtitle2">Service type</MudText>
+                            <MudText>@_request.ServiceType</MudText>
+                        </MudPaper>
+                        <MudPaper Class="pa-3 info-panel" Elevation="0">
+                            <MudText Typo="Typo.subtitle2">Symptoms / notes</MudText>
+                            <MudText>@_request.Symptoms</MudText>
+                        </MudPaper>
+                        <MudPaper Class="pa-3 info-panel" Elevation="0">
+                            <MudText Typo="Typo.subtitle2">Preferred availability</MudText>
+                            <MudText>@(!string.IsNullOrWhiteSpace(_request.PreferredAvailability) ? _request.PreferredAvailability : "Not provided")</MudText>
+                        </MudPaper>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <MudGrid>
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.h6" GutterBottom="true">Status</MudText>
-                <MudSelect @bind-Value="_statusModel.Status" Label="Status" Disabled="_isSaving">
-                    @foreach (var status in ServiceRequestStatuses.All)
-                    {
-                        <MudSelectItem Value="@status">@status</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveStatusAsync" Disabled="_isSaving">Save status</MudButton>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.h6" GutterBottom="true">Quote</MudText>
-                <MudNumericField @bind-Value="_quoteModel.EstimateLow" Label="Estimate low" Disabled="_isSaving" />
-                <MudNumericField @bind-Value="_quoteModel.EstimateHigh" Label="Estimate high" Disabled="_isSaving" />
-                <MudTextField @bind-Value="_quoteModel.PartsNeeded" Label="Parts needed" Lines="4" Disabled="_isSaving" />
-                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving">Save quote</MudButton>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4">
-                <MudText Typo="Typo.h6" GutterBottom="true">Internal notes</MudText>
-                <MudTextField @bind-Value="_notesModel.InternalNotes" Label="Internal notes" Lines="7" Disabled="_isSaving" />
-                <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveNotesAsync" Disabled="_isSaving">Save notes</MudButton>
-            </MudPaper>
+        <MudItem xs="12" lg="7">
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" GutterBottom="true">Job status</MudText>
+                            <MudSelect @bind-Value="_statusModel.Status" Label="Status" Disabled="_isSaving" Variant="Variant.Outlined">
+                                @foreach (var status in ServiceRequestStatuses.All)
+                                {
+                                    <MudSelectItem Value="@status">@status</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudButton Class="mt-3" Color="Color.Secondary" Variant="Variant.Filled" OnClick="SaveStatusAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.Save">Save status</MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="0" Class="action-card h-100">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" GutterBottom="true">Quote</MudText>
+                            <MudNumericField @bind-Value="_quoteModel.EstimateLow" Label="Estimate low" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                            <MudNumericField @bind-Value="_quoteModel.EstimateHigh" Label="Estimate high" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                            <MudTextField @bind-Value="_quoteModel.PartsNeeded" Label="Parts needed" Lines="4" Disabled="_isSaving" Variant="Variant.Outlined" />
+                            <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.RequestQuote">Save quote</MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="0" Class="action-card h-100">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" GutterBottom="true">Internal notes</MudText>
+                            <MudTextField @bind-Value="_notesModel.InternalNotes" Label="Internal notes" Lines="9" Disabled="_isSaving" Variant="Variant.Outlined" />
+                            <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveNotesAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.StickyNote2">Save notes</MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
         </MudItem>
     </MudGrid>
 }
@@ -147,4 +183,16 @@ else if (_request is not null)
         };
         _notesModel = new ServiceRequestNotesUpdateModel { InternalNotes = _request.InternalNotes };
     }
+
+    private static Color GetStatusColor(string status) => status switch
+    {
+        ServiceRequestStatuses.New => Color.Info,
+        ServiceRequestStatuses.NeedInfo => Color.Warning,
+        ServiceRequestStatuses.Quoted => Color.Primary,
+        ServiceRequestStatuses.Scheduled => Color.Secondary,
+        ServiceRequestStatuses.PartsOrdered => Color.Tertiary,
+        ServiceRequestStatuses.Completed => Color.Success,
+        ServiceRequestStatuses.Declined => Color.Error,
+        _ => Color.Default
+    };
 }
