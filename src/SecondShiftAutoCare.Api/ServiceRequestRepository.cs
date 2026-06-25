@@ -6,48 +6,35 @@ using SecondShiftAutoCare.Shared.Models;
 
 namespace SecondShiftAutoCare.Api;
 
-public sealed class ServiceRequestRepository
+public sealed class ServiceRequestRepository(IConfiguration configuration)
 {
-    private readonly string _connectionString;
+    private const string SelectColumns = """
+        Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
+        ServiceType, Symptoms, PreferredAvailability, Status,
+        EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
+        """;
 
-    public ServiceRequestRepository(IConfiguration configuration)
-    {
-        _connectionString = configuration.GetConnectionString("SqlConnection")
-            ?? configuration["SqlConnectionString"]
-            ?? throw new InvalidOperationException("Configure an Azure SQL connection string named 'SqlConnection' or 'SqlConnectionString'.");
-    }
+    private const string OutputColumns = """
+        inserted.Id, inserted.CustomerName, inserted.Phone, inserted.Email, inserted.VehicleYear,
+        inserted.VehicleMake, inserted.VehicleModel, inserted.Mileage, inserted.ServiceType,
+        inserted.Symptoms, inserted.PreferredAvailability, inserted.Status, inserted.EstimateLow,
+        inserted.EstimateHigh, inserted.PartsNeeded, inserted.InternalNotes, inserted.CreatedAtUtc,
+        inserted.UpdatedAtUtc
+        """;
 
     public async Task<ServiceRequestDto> CreateAsync(ServiceRequestDto request)
     {
-        const string sql = """
+        const string sql = $"""
             INSERT INTO dbo.ServiceRequests
             (
                 Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                ServiceType, Symptoms, PreferredAvailability, Status
+                ServiceType, Symptoms, PreferredAvailability, Status, CreatedAtUtc, UpdatedAtUtc
             )
-            OUTPUT
-                inserted.Id,
-                inserted.CustomerName,
-                inserted.Phone,
-                inserted.Email,
-                inserted.VehicleYear,
-                inserted.VehicleMake,
-                inserted.VehicleModel,
-                inserted.Mileage,
-                inserted.ServiceType,
-                inserted.Symptoms,
-                inserted.PreferredAvailability,
-                inserted.Status,
-                inserted.EstimateLow,
-                inserted.EstimateHigh,
-                inserted.PartsNeeded,
-                inserted.InternalNotes,
-                inserted.CreatedAtUtc,
-                inserted.UpdatedAtUtc
+            OUTPUT {OutputColumns}
             VALUES
             (
                 @Id, @CustomerName, @Phone, @Email, @VehicleYear, @VehicleMake, @VehicleModel, @Mileage,
-                @ServiceType, @Symptoms, @PreferredAvailability, @Status
+                @ServiceType, @Symptoms, @PreferredAvailability, @Status, SYSUTCDATETIME(), SYSUTCDATETIME()
             );
             """;
 
@@ -73,10 +60,8 @@ public sealed class ServiceRequestRepository
 
     public async Task<IReadOnlyList<ServiceRequestDto>> GetAllAsync()
     {
-        const string sql = """
-            SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, Status,
-                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
+        const string sql = $"""
+            SELECT {SelectColumns}
             FROM dbo.ServiceRequests
             ORDER BY CreatedAtUtc DESC;
             """;
@@ -88,10 +73,8 @@ public sealed class ServiceRequestRepository
 
     public async Task<ServiceRequestDto?> GetByIdAsync(Guid id)
     {
-        const string sql = """
-            SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, Status,
-                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
+        const string sql = $"""
+            SELECT {SelectColumns}
             FROM dbo.ServiceRequests
             WHERE Id = @Id;
             """;
@@ -141,10 +124,8 @@ public sealed class ServiceRequestRepository
             return null;
         }
 
-        const string selectSql = """
-            SELECT Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                   ServiceType, Symptoms, PreferredAvailability, Status,
-                   EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
+        const string selectSql = $"""
+            SELECT {SelectColumns}
             FROM dbo.ServiceRequests
             WHERE Id = @Id;
             """;
@@ -152,5 +133,14 @@ public sealed class ServiceRequestRepository
         return await connection.QuerySingleAsync<ServiceRequestDto>(selectSql, new { Id = id });
     }
 
-    private IDbConnection CreateConnection() => new SqlConnection(_connectionString);
+    private IDbConnection CreateConnection()
+    {
+        var connectionString = configuration["SqlConnectionString"];
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("SqlConnectionString is not configured. Add it to the Azure Function App application settings.");
+        }
+
+        return new SqlConnection(connectionString);
+    }
 }
