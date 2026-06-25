@@ -3,47 +3,80 @@
 @inject NavigationManager Navigation
 <PageTitle>Request Service</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Request Service</MudText>
-@if (!string.IsNullOrWhiteSpace(_errorMessage))
-{
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
-}
-<EditForm Model="Model" OnValidSubmit="SubmitAsync">
-    <DataAnnotationsValidator />
-    <MudGrid>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.VehicleYear" Label="Vehicle year" For="@(() => Model.VehicleYear)" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleMake" Label="Vehicle make" For="@(() => Model.VehicleMake)" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.VehicleModel" Label="Vehicle model" For="@(() => Model.VehicleModel)" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage (optional)" For="@(() => Model.Mileage)" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12" md="6">
-            <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true" Disabled="_isSubmitting">
-                @foreach (var serviceType in ServiceTypeOptions.All)
+<MudGrid Spacing="4">
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-5 sticky-panel" Elevation="0">
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Icon="@Icons.Material.Filled.Place">Zeeland / West Michigan</MudChip>
+            <MudText Typo="Typo.h4" Class="mt-3" GutterBottom="true">Request Service</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4">Tell us about the vehicle, the issue, and the best after-hours or weekend windows for follow-up.</MudText>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true">Submitting this form does not approve repairs. We will contact you first.</MudAlert>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" lg="8">
+        <MudCard Elevation="0" Class="form-card">
+            <MudCardContent>
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
                 {
-                    <MudSelectItem Value="@serviceType">@serviceType</MudSelectItem>
+                    <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
                 }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms" For="@(() => Model.Symptoms)" Lines="5" Required="true" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" /></MudItem>
-        <MudItem xs="12">
-            <ValidationSummary />
-            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled" Disabled="_isSubmitting">
-                @if (_isSubmitting)
-                {
-                    <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" />
-                    <span>Submitting...</span>
-                }
-                else
-                {
-                    <span>Submit request</span>
-                }
-            </MudButton>
-        </MudItem>
-    </MudGrid>
-</EditForm>
+                <EditForm Model="Model" OnValidSubmit="SubmitAsync">
+                    <DataAnnotationsValidator />
+                    <MudStack Spacing="4">
+                        <section>
+                            <MudText Typo="Typo.h6" Class="mb-3">Contact</MudText>
+                            <MudGrid Spacing="3">
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                        </section>
+                        <MudDivider />
+                        <section>
+                            <MudText Typo="Typo.h6" Class="mb-3">Vehicle</MudText>
+                            <MudGrid Spacing="3">
+                                <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="Model.VehicleYear" Label="Year" For="@(() => Model.VehicleYear)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="Model.VehicleMake" Label="Make" For="@(() => Model.VehicleMake)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="Model.VehicleModel" Label="Model" For="@(() => Model.VehicleModel)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage (optional)" For="@(() => Model.Mileage)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                        </section>
+                        <MudDivider />
+                        <section>
+                            <MudText Typo="Typo.h6" Class="mb-3">Service details</MudText>
+                            <MudGrid Spacing="3">
+                                <MudItem xs="12" md="6">
+                                    <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined">
+                                        @foreach (var serviceType in ServiceTypeOptions.All)
+                                        {
+                                            <MudSelectItem Value="@serviceType">@serviceType</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" Placeholder="Weeknights after 6, Saturday morning..." For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms / notes" HelperText="Include noises, warning lights, when it started, or recent work." For="@(() => Model.Symptoms)" Lines="6" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                            </MudGrid>
+                        </section>
+                        <ValidationSummary />
+                        <MudStack Row="true" Justify="Justify.FlexEnd" Class="flex-wrap">
+                            <MudButton Href="/" Color="Color.Primary" Variant="Variant.Text" Disabled="_isSubmitting">Cancel</MudButton>
+                            <MudButton ButtonType="ButtonType.Submit" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Large" Disabled="_isSubmitting" StartIcon="@Icons.Material.Filled.Send">
+                                @if (_isSubmitting)
+                                {
+                                    <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" />
+                                    <span>Submitting...</span>
+                                }
+                                else
+                                {
+                                    <span>Submit request</span>
+                                }
+                            </MudButton>
+                        </MudStack>
+                    </MudStack>
+                </EditForm>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
     private ServiceRequestCreateModel Model { get; } = new();

@@ -29,11 +29,12 @@ public sealed class ServiceRequestNotesUpdateModel
 public static class ServiceRequestStatuses
 {
     public const string New = "New";
-    public const string Contacted = "Contacted";
+    public const string NeedInfo = "Need Info";
     public const string Quoted = "Quoted";
     public const string Scheduled = "Scheduled";
+    public const string PartsOrdered = "Parts Ordered";
     public const string Completed = "Completed";
-    public const string Canceled = "Canceled";
+    public const string Declined = "Declined";
 
-    public static readonly string[] All = [New, Contacted, Quoted, Scheduled, Completed, Canceled];
+    public static readonly string[] All = [New, NeedInfo, Quoted, Scheduled, PartsOrdered, Completed, Declined];
 }

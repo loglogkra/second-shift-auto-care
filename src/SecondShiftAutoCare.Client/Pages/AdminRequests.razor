@@ -2,11 +2,18 @@
 @inject HttpClient Http
 <PageTitle>Admin Requests</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Admin Requests</MudText>
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
+    <div>
+        <MudText Typo="Typo.overline" Color="Color.Primary">Admin job board</MudText>
+        <MudText Typo="Typo.h4">Service Requests</MudText>
+    </div>
+    <MudSpacer />
+    <MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add">New Request</MudButton>
+</MudStack>
 
 @if (_isLoading)
 {
-    <MudProgressCircular Indeterminate="true" />
+    <MudPaper Class="pa-6 text-center" Elevation="0"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /><MudText Class="mt-3">Loading requests...</MudText></MudPaper>
 }
 else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
@@ -14,20 +21,27 @@ else if (!string.IsNullOrWhiteSpace(_errorMessage))
 }
 else
 {
-    <MudTable Items="Requests" Hover="true">
+    <MudGrid Spacing="3" Class="mb-4">
+        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count</MudText><MudText Typo="Typo.body2">Total</MudText></MudCardContent></MudCard></MudItem>
+        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.New)</MudText><MudText Typo="Typo.body2">New</MudText></MudCardContent></MudCard></MudItem>
+        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.Scheduled)</MudText><MudText Typo="Typo.body2">Scheduled</MudText></MudCardContent></MudCard></MudItem>
+        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.PartsOrdered)</MudText><MudText Typo="Typo.body2">Parts Ordered</MudText></MudCardContent></MudCard></MudItem>
+    </MudGrid>
+
+    <MudTable Items="Requests" Hover="true" Breakpoint="Breakpoint.Sm" Class="job-board" Elevation="0">
         <HeaderContent>
             <MudTh>Status</MudTh><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd>@context.Status</MudTd>
-            <MudTd>@context.CustomerName</MudTd>
-            <MudTd>@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
-            <MudTd>@context.ServiceType</MudTd>
-            <MudTd>@context.CreatedAtUtc?.ToLocalTime().ToString("g")</MudTd>
-            <MudTd><MudLink Href="@($"/admin/requests/{context.Id}")">View</MudLink></MudTd>
+            <MudTd DataLabel="Status"><MudChip T="string" Color="GetStatusColor(context.Status)" Variant="Variant.Filled" Size="Size.Small">@context.Status</MudChip></MudTd>
+            <MudTd DataLabel="Customer"><MudText Typo="Typo.subtitle2">@context.CustomerName</MudText><MudText Typo="Typo.caption">@context.Phone</MudText></MudTd>
+            <MudTd DataLabel="Vehicle">@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
+            <MudTd DataLabel="Service">@context.ServiceType</MudTd>
+            <MudTd DataLabel="Created">@context.CreatedAtUtc?.ToLocalTime().ToString("g")</MudTd>
+            <MudTd><MudButton Href="@($"/admin/requests/{context.Id}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Open</MudButton></MudTd>
         </RowTemplate>
         <NoRecordsContent>
-            <MudText>No service requests yet.</MudText>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="ma-4">No service requests yet.</MudAlert>
         </NoRecordsContent>
     </MudTable>
 }
@@ -53,4 +67,16 @@ else
             _isLoading = false;
         }
     }
+
+    private static Color GetStatusColor(string status) => status switch
+    {
+        ServiceRequestStatuses.New => Color.Info,
+        ServiceRequestStatuses.NeedInfo => Color.Warning,
+        ServiceRequestStatuses.Quoted => Color.Primary,
+        ServiceRequestStatuses.Scheduled => Color.Secondary,
+        ServiceRequestStatuses.PartsOrdered => Color.Tertiary,
+        ServiceRequestStatuses.Completed => Color.Success,
+        ServiceRequestStatuses.Declined => Color.Error,
+        _ => Color.Default
+    };
 }

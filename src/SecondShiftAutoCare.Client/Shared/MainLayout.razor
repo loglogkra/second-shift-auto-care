@@ -1,27 +1,35 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Primary" Dense="true">
+    <MudAppBar Elevation="0" Color="Color.Primary" Dense="false" Class="app-bar">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" Class="me-2" />
-        <MudLink Href="/" Typo="Typo.h6" Class="app-title">2nd Shift Auto Care</MudLink>
+        <MudLink Href="/" Class="brand-link">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.subtitle1" Class="brand-name">2nd Shift Auto Care</MudText>
+                <MudText Typo="Typo.caption" Class="brand-subtitle">Zeeland / West Michigan</MudText>
+            </MudStack>
+        </MudLink>
         <MudSpacer />
-        <MudButton Href="/request-service" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small">Request Service</MudButton>
+        <MudButton Href="/request-service" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EditCalendar" Class="top-cta">Request Service</MudButton>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Breakpoint="Breakpoint.Md" Variant="DrawerVariant.Responsive">
-        <MudDrawerHeader>
-            <MudText Typo="Typo.subtitle1">Menu</MudText>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0" Breakpoint="Breakpoint.Md" Variant="DrawerVariant.Responsive" Class="app-drawer">
+        <MudDrawerHeader Class="drawer-header">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle1" Class="font-weight-700">2nd Shift Auto Care</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Filled">After-hours service</MudChip>
+            </MudStack>
         </MudDrawerHeader>
         <NavMenu />
     </MudDrawer>
 
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6 px-4">
+    <MudMainContent Class="main-content">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-5 py-md-8 px-4">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -29,6 +37,26 @@
 
 @code {
     private bool _drawerOpen = true;
+
+    private readonly MudTheme _theme = new()
+    {
+        Palette = new Palette
+        {
+            Primary = "#1f3a5f",
+            Secondary = "#f5a524",
+            Tertiary = "#2f6f5e",
+            Background = "#f5f7fb",
+            Surface = "#ffffff",
+            AppbarBackground = "#1f3a5f",
+            DrawerBackground = "#ffffff",
+            TextPrimary = "#172033",
+            TextSecondary = "#5d6b82"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "14px"
+        }
+    };
 
     private void ToggleDrawer()
     {
