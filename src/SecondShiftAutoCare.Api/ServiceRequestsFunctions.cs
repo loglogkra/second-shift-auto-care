@@ -2,11 +2,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using SecondShiftAutoCare.Shared.Models;
 
 namespace SecondShiftAutoCare.Api;
 
-public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository)
+public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository, ILogger<ServiceRequestsFunctions> logger)
 {
     [Function(nameof(CreateServiceRequest))]
     public async Task<HttpResponseData> CreateServiceRequest(
@@ -24,35 +26,37 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
-        var created = await repository.CreateAsync(serviceRequest);
-        var response = request.CreateResponse(HttpStatusCode.Created);
-        response.Headers.Add("Location", $"/api/admin/service-requests/{created.Id}");
-        await response.WriteAsJsonAsync(created);
-        response.StatusCode = HttpStatusCode.Created;
-        return response;
+        return await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var created = await repository.CreateAsync(serviceRequest);
+            var response = request.CreateResponse(HttpStatusCode.Created);
+            response.Headers.Add("Location", $"/api/admin/service-requests/{created.Id}");
+            await response.WriteAsJsonAsync(created);
+            response.StatusCode = HttpStatusCode.Created;
+            return response;
+        });
     }
 
     [Function(nameof(GetServiceRequests))]
     public async Task<HttpResponseData> GetServiceRequests(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
-    {
-        var serviceRequests = await repository.GetAllAsync();
-        var response = request.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(serviceRequests);
-        response.StatusCode = HttpStatusCode.OK;
-        return response;
-    }
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request) =>
+        await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var serviceRequests = await repository.GetAllAsync();
+            return await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequests);
+        });
 
     [Function(nameof(GetServiceRequestById))]
     public async Task<HttpResponseData> GetServiceRequestById(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
-        Guid id)
-    {
-        var serviceRequest = await repository.GetByIdAsync(id);
-        return serviceRequest is null
-            ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
-            : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
-    }
+        Guid id) =>
+        await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var serviceRequest = await repository.GetByIdAsync(id);
+            return serviceRequest is null
+                ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
+                : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        });
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
@@ -76,10 +80,13 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
-        var serviceRequest = await repository.UpdateStatusAsync(id, update.Status);
-        return serviceRequest is null
-            ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
-            : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        return await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var serviceRequest = await repository.UpdateStatusAsync(id, update.Status);
+            return serviceRequest is null
+                ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
+                : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        });
     }
 
     [Function(nameof(UpdateServiceRequestQuote))]
@@ -99,10 +106,13 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
-        var serviceRequest = await repository.UpdateQuoteAsync(id, update.EstimateLow, update.EstimateHigh, update.PartsNeeded);
-        return serviceRequest is null
-            ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
-            : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        return await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var serviceRequest = await repository.UpdateQuoteAsync(id, update.EstimateLow, update.EstimateHigh, update.PartsNeeded);
+            return serviceRequest is null
+                ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
+                : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        });
     }
 
     [Function(nameof(UpdateServiceRequestNotes))]
@@ -122,10 +132,31 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
-        var serviceRequest = await repository.UpdateNotesAsync(id, update.InternalNotes);
-        return serviceRequest is null
-            ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
-            : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        return await ExecuteDatabaseActionAsync(request, async () =>
+        {
+            var serviceRequest = await repository.UpdateNotesAsync(id, update.InternalNotes);
+            return serviceRequest is null
+                ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
+                : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
+        });
+    }
+
+    private async Task<HttpResponseData> ExecuteDatabaseActionAsync(HttpRequestData request, Func<Task<HttpResponseData>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("SqlConnectionString", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(ex, "SqlConnectionString is missing from configuration.");
+            return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "The service request database connection is not configured. Set SqlConnectionString in the Function App application settings.");
+        }
+        catch (SqlException ex)
+        {
+            logger.LogError(ex, "Azure SQL operation failed.");
+            return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "The service request database is unavailable. Please try again later.");
+        }
     }
 
     private static IEnumerable<string> Validate(object model)
