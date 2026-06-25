@@ -4,6 +4,7 @@
     "exclude": ["/api/*", "/css/*", "/_framework/*"]
   },
   "routes": [
-    { "route": "/admin/*", "allowedRoles": ["authenticated"] }
+    { "route": "/admin/*", "allowedRoles": ["authenticated"] },
+    { "route": "/api/admin/*", "allowedRoles": ["authenticated"] }
   ]
 }
