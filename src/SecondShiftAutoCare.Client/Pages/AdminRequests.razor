@@ -41,12 +41,23 @@ else
     {
         try
         {
-            var requests = await Http.GetFromJsonAsync<List<ServiceRequestDto>>("api/admin/service-requests");
+            using var response = await Http.GetAsync("api/admin/service-requests");
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorMessage = "Unable to load service requests. Please make sure the service request API is running.";
+                return;
+            }
+
+            var requests = await response.Content.ReadFromJsonAsync<List<ServiceRequestDto>>();
             Requests = requests?.OrderByDescending(request => request.CreatedAtUtc).ToList() ?? [];
         }
         catch (HttpRequestException)
         {
             _errorMessage = "Unable to load service requests. Please try again.";
+        }
+        catch (JsonException)
+        {
+            _errorMessage = "The service request API returned an unexpected response. Please make sure the API is running and reachable at /api/admin/service-requests.";
         }
         finally
         {

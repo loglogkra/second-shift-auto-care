@@ -77,7 +77,16 @@ else if (_request is not null)
     {
         try
         {
-            _request = await Http.GetFromJsonAsync<ServiceRequestDto>($"api/admin/service-requests/{RequestId}");
+            using var response = await Http.GetAsync($"api/admin/service-requests/{RequestId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                _errorMessage = response.StatusCode == System.Net.HttpStatusCode.NotFound
+                    ? "Service request was not found."
+                    : "Unable to load this service request. Please make sure the service request API is running.";
+                return;
+            }
+
+            _request = await response.Content.ReadFromJsonAsync<ServiceRequestDto>();
             if (_request is null)
             {
                 _errorMessage = "Service request was not found.";
@@ -89,6 +98,10 @@ else if (_request is not null)
         catch (HttpRequestException)
         {
             _errorMessage = "Unable to load this service request. Please try again.";
+        }
+        catch (JsonException)
+        {
+            _errorMessage = "The service request API returned an unexpected response. Please make sure the API is running and reachable.";
         }
         finally
         {
@@ -124,6 +137,10 @@ else if (_request is not null)
         catch (HttpRequestException)
         {
             _errorMessage = "Unable to reach the service request API. Please try again.";
+        }
+        catch (JsonException)
+        {
+            _errorMessage = "The service request API returned an unexpected response. Please try again.";
         }
         finally
         {
