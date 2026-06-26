@@ -5,8 +5,19 @@
     <MudItem xs="12" md="7">
         <MudPaper Class="pa-5 pa-md-8 hero-card" Elevation="0">
             <MudStack Spacing="3">
+                <div class="hero-brand-lockup">
+                    <div class="hero-logo-line" aria-hidden="true">
+                        <span class="hero-logo-line__car"></span>
+                        <span class="hero-logo-line__moon"></span>
+                        <span class="hero-logo-line__star hero-logo-line__star--one"></span>
+                        <span class="hero-logo-line__star hero-logo-line__star--two"></span>
+                    </div>
+                    <div class="hero-wordmark"><span>2ND</span> Shift</div>
+                    <div class="hero-service">Auto Care</div>
+                    <div class="hero-tagline">After-hours & weekend auto service</div>
+                </div>
                 <MudStack Row="true" Spacing="1" Class="flex-wrap">
-                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.NightsStay">After-hours and weekend auto service</MudChip>
+                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.DarkMode">After-hours and weekend auto service</MudChip>
                     <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Icon="@Icons.Material.Filled.Place">Zeeland / West Michigan</MudChip>
                 </MudStack>
                 <MudText Typo="Typo.h3" Class="hero-title">2nd Shift Auto Care</MudText>
@@ -16,8 +27,8 @@
                     Built for busy drivers who need straightforward service options outside normal shop hours.
                 </MudText>
                 <MudStack Row="true" Spacing="2" Class="flex-wrap">
-                    <MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.EditCalendar">Request Service</MudButton>
-                    <MudButton Href="/admin/requests" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large" StartIcon="@Icons.Material.Filled.Assignment">Admin Requests</MudButton>
+                    <MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.Handyman">Request Service</MudButton>
+                    <MudButton Href="/admin/requests" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large" StartIcon="@Icons.Material.Filled.Speed">Admin Requests</MudButton>
                 </MudStack>
             </MudStack>
         </MudPaper>
@@ -29,9 +40,9 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h5" GutterBottom="true">How it works</MudText>
                     <MudList T="string" Dense="true" Class="clean-list">
-                        <MudListItem Icon="@Icons.Material.Filled.EditNote">Send the vehicle, symptoms, and availability.</MudListItem>
-                        <MudListItem Icon="@Icons.Material.Filled.PhoneInTalk">We review and contact you with next steps.</MudListItem>
-                        <MudListItem Icon="@Icons.Material.Filled.Handshake">You approve the plan before service begins.</MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.DriveFileRenameOutline">Send the vehicle, symptoms, and availability.</MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.MarkChatUnread">We review and contact you with next steps.</MudListItem>
+                        <MudListItem Icon="@Icons.Material.Filled.Verified">You approve the plan before service begins.</MudListItem>
                     </MudList>
                 </MudCardContent>
             </MudCard>
@@ -44,12 +55,12 @@
 
 <MudGrid Spacing="3" Class="mt-4">
     <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Primary" /><MudText Typo="Typo.h6">Evening-friendly</MudText><MudText Typo="Typo.body2">Share windows that work after your shift.</MudText></MudCardContent></MudCard>
+        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.NightsStay" Color="Color.Primary" /><MudText Typo="Typo.h6">Evening-friendly</MudText><MudText Typo="Typo.body2">Share windows that work after your shift.</MudText></MudCardContent></MudCard>
     </MudItem>
     <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.BuildCircle" Color="Color.Primary" /><MudText Typo="Typo.h6">Common repairs</MudText><MudText Typo="Typo.body2">Oil, brakes, belts, plugs, and diagnostics.</MudText></MudCardContent></MudCard>
+        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.Construction" Color="Color.Primary" /><MudText Typo="Typo.h6">Common repairs</MudText><MudText Typo="Typo.body2">Oil, brakes, belts, plugs, and diagnostics.</MudText></MudCardContent></MudCard>
     </MudItem>
     <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Primary" /><MudText Typo="Typo.h6">Clear follow-up</MudText><MudText Typo="Typo.body2">Status updates keep requests organized.</MudText></MudCardContent></MudCard>
+        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.TaskAlt" Color="Color.Primary" /><MudText Typo="Typo.h6">Clear follow-up</MudText><MudText Typo="Typo.body2">Status updates keep requests organized.</MudText></MudCardContent></MudCard>
     </MudItem>
 </MudGrid>
