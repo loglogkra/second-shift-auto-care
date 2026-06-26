@@ -11,10 +11,14 @@ public sealed class ServiceRequestDbContextFactory : IDesignTimeDbContextFactory
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("local.settings.json", optional: true)
+            .AddUserSecrets<ServiceRequestDbContextFactory>(optional: true)
             .AddEnvironmentVariables()
             .Build();
 
-        var connectionString = configuration["SqlConnectionString"];
+        // In local.settings.json the value is nested under "Values"; the Functions host
+        // promotes it to a flat key at runtime, but at design time we must read it directly.
+        var connectionString = configuration["Values:SqlConnectionString"]
+            ?? configuration["SqlConnectionString"];
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException("SqlConnectionString is not configured. Add it to local.settings.json, user secrets, or the Azure Function App application settings.");

@@ -1,8 +1,11 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11911.148 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecondShiftAutoCare.Client", "src\SecondShiftAutoCare.Client\SecondShiftAutoCare.Client.csproj", "{4C3E8FCB-511A-46E9-A399-2B56C9E1C101}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0E214751-F4C2-4E60-89A7-93389A88C820} = {0E214751-F4C2-4E60-89A7-93389A88C820}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecondShiftAutoCare.Api", "src\SecondShiftAutoCare.Api\SecondShiftAutoCare.Api.csproj", "{0E214751-F4C2-4E60-89A7-93389A88C820}"
 EndProject
@@ -26,5 +29,8 @@ Global
 		{036A1E79-68FF-4E62-9698-ACCD366D448B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{036A1E79-68FF-4E62-9698-ACCD366D448B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{036A1E79-68FF-4E62-9698-ACCD366D448B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
