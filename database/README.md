@@ -5,3 +5,5 @@ The service request database schema is managed with Entity Framework Core migrat
 The API expects a setting named `SqlConnectionString` in local configuration or Azure Function App application settings.
 
 See `docs/database-migrations.md` for local and Azure SQL migration commands.
+
+- `002_expand_service_requests.sql` expands intake/admin fields for guided service requests, urgency, drivable/location, alternate contacts, photo follow-up, and archived request support.

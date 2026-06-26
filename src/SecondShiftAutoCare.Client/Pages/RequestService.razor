@@ -1,5 +1,5 @@
 @page "/request-service"
-@inject HttpClient Http
+@inject ServiceRequestClient ServiceRequests
 @inject NavigationManager Navigation
 <PageTitle>Request Service</PageTitle>
 
@@ -28,6 +28,8 @@
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.AlternateContactName" Label="Alternate contact name (optional)" For="@(() => Model.AlternateContactName)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.AlternateContactPhone" Label="Alternate contact phone" For="@(() => Model.AlternateContactPhone)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
                         </section>
                         <MudDivider />
@@ -45,16 +47,29 @@
                             <MudText Typo="Typo.h6" Class="mb-3">Service details</MudText>
                             <MudGrid Spacing="3">
                                 <MudItem xs="12" md="6">
-                                    <MudSelect @bind-Value="Model.ServiceType" Label="Service type" For="@(() => Model.ServiceType)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined">
+                                    <MudSelect T="string" MultiSelection="true" SelectedValues="_selectedServices" SelectedValuesChanged="OnSelectedServicesChanged" Label="What service do you need?" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" HelperText="Choose multiple services or Not Sure / Diagnose It.">
                                         @foreach (var serviceType in ServiceTypeOptions.All)
                                         {
                                             <MudSelectItem Value="@serviceType">@serviceType</MudSelectItem>
                                         }
                                     </MudSelect>
                                 </MudItem>
+                                <MudItem xs="12" md="6"><MudSelect @bind-Value="Model.UrgencyLevel" Label="Urgency" For="@(() => Model.UrgencyLevel)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined">
+                                    @foreach (var urgency in ServiceRequestUrgencyLevels.All)
+                                    {
+                                        <MudSelectItem Value="@urgency">@urgency</MudSelectItem>
+                                    }
+                                </MudSelect></MudItem>
+                                <MudItem xs="12" md="6"><MudSelect @bind-Value="Model.IsVehicleDrivable" Label="Is the vehicle drivable?" For="@(() => Model.IsVehicleDrivable)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined">
+                                    <MudSelectItem Value="@("Yes")">Yes</MudSelectItem><MudSelectItem Value="@("No")">No</MudSelectItem><MudSelectItem Value="@("Unsure")">Unsure</MudSelectItem>
+                                </MudSelect></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="Model.VehicleLocation" Label="Where is the vehicle located?" For="@(() => Model.VehicleLocation)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" Placeholder="Weeknights after 6, Saturday morning..." For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.ServiceSpecificAnswers" Label="Guided wizard answers" HelperText="Examples: warning lights, axle, front/rear brakes, battery age, leak location." For="@(() => Model.ServiceSpecificAnswers)" Lines="4" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms / notes" HelperText="Include noises, warning lights, when it started, or recent work." For="@(() => Model.Symptoms)" Lines="6" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
+                        <MudCheckBox @bind-Value="Model.WantsPhotoUploadLater" Label="I may upload photos later if requested" Disabled="_isSubmitting" />
+                            <MudCheckBox @bind-Value="Model.ConsentAccepted" Label="I understand this request is for scheduling/quoting only and does not authorize repairs." Required="true" Disabled="_isSubmitting" />
                         </section>
                         <ValidationSummary />
                         <MudStack Row="true" Justify="Justify.FlexEnd" Class="flex-wrap">
@@ -82,6 +97,13 @@
     private ServiceRequestCreateModel Model { get; } = new();
     private bool _isSubmitting;
     private string? _errorMessage;
+    private HashSet<string> _selectedServices = [];
+
+    private void OnSelectedServicesChanged(IEnumerable<string> services)
+    {
+        _selectedServices = services.ToHashSet();
+        Model.ServiceType = string.Join(", ", _selectedServices);
+    }
 
     private async Task SubmitAsync()
     {
@@ -90,17 +112,11 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/service-requests", Model.ToDto());
-            if (response.IsSuccessStatusCode)
-            {
-                Navigation.NavigateTo("/request-submitted");
-                return;
-            }
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            _errorMessage = $"We could not submit your request right now. API returned {(int)response.StatusCode} {response.StatusCode}. Response: {responseBody}";
+            await ServiceRequests.CreateAsync(Model);
+            Navigation.NavigateTo("/request-submitted");
+            return;
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
         {
             _errorMessage = $"We could not reach the service request API. Please try again in a few minutes. Details: {ex.Message}";
         }

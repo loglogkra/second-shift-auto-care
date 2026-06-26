@@ -33,8 +33,20 @@ public static class ServiceRequestStatuses
     public const string Quoted = "Quoted";
     public const string Scheduled = "Scheduled";
     public const string PartsOrdered = "Parts Ordered";
+    public const string InProgress = "In Progress";
     public const string Completed = "Completed";
+    public const string Paid = "Paid";
     public const string Declined = "Declined";
+    public const string Canceled = "Canceled";
 
-    public static readonly string[] All = [New, NeedInfo, Quoted, Scheduled, PartsOrdered, Completed, Declined];
+    public static readonly string[] All = [New, NeedInfo, Quoted, Scheduled, PartsOrdered, InProgress, Completed, Paid, Declined, Canceled];
+}
+
+public static class ServiceRequestUrgencyLevels
+{
+    public const string Routine = "Routine";
+    public const string Soon = "Soon";
+    public const string Urgent = "Urgent";
+
+    public static readonly string[] All = [Routine, Soon, Urgent];
 }

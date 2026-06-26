@@ -1,5 +1,5 @@
 @page "/admin/requests/{RequestId:guid}"
-@inject HttpClient Http
+@inject ServiceRequestClient ServiceRequests
 <PageTitle>Request Detail</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
@@ -39,16 +39,18 @@ else if (_request is not null)
                             <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
-                            <MudText Typo="Typo.subtitle2">Service type</MudText>
+                            <MudText Typo="Typo.subtitle2">Services</MudText>
                             <MudText>@_request.ServiceType</MudText>
+                            <MudText Typo="Typo.caption">Urgency: @_request.UrgencyLevel • Drivable: @(_request.IsVehicleDrivable ?? "Not provided")</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
                             <MudText Typo="Typo.subtitle2">Symptoms / notes</MudText>
                             <MudText>@_request.Symptoms</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
-                            <MudText Typo="Typo.subtitle2">Preferred availability</MudText>
+                            <MudText Typo="Typo.subtitle2">Preferred availability / location</MudText>
                             <MudText>@(!string.IsNullOrWhiteSpace(_request.PreferredAvailability) ? _request.PreferredAvailability : "Not provided")</MudText>
+                            <MudText>@(!string.IsNullOrWhiteSpace(_request.VehicleLocation) ? _request.VehicleLocation : "Location not provided")</MudText>
                         </MudPaper>
                     </MudStack>
                 </MudCardContent>
@@ -113,16 +115,7 @@ else if (_request is not null)
     {
         try
         {
-            using var response = await Http.GetAsync($"api/admin/service-requests/{RequestId}");
-            if (!response.IsSuccessStatusCode)
-            {
-                _errorMessage = response.StatusCode == System.Net.HttpStatusCode.NotFound
-                    ? "Service request was not found."
-                    : "Unable to load this service request. Please make sure the service request API is running.";
-                return;
-            }
-
-            _request = await response.Content.ReadFromJsonAsync<ServiceRequestDto>();
+            _request = await ServiceRequests.GetByIdAsync(RequestId);
             if (_request is null)
             {
                 _errorMessage = "Service request was not found.";
@@ -131,13 +124,9 @@ else if (_request is not null)
 
             ResetModels();
         }
-        catch (HttpRequestException)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
         {
-            _errorMessage = "Unable to load this service request. Please try again.";
-        }
-        catch (JsonException)
-        {
-            _errorMessage = "The service request API returned an unexpected response. Please make sure the API is running and reachable.";
+            _errorMessage = ex.Message;
         }
         finally
         {
@@ -159,24 +148,19 @@ else if (_request is not null)
 
         try
         {
-            var response = await Http.PutAsJsonAsync($"api/admin/service-requests/{RequestId}/{segment}", model);
-            if (!response.IsSuccessStatusCode)
+            _request = segment switch
             {
-                _errorMessage = "Unable to save changes. Please review the request and try again.";
-                return;
-            }
-
-            _request = await response.Content.ReadFromJsonAsync<ServiceRequestDto>();
+                "status" => await ServiceRequests.UpdateStatusAsync(RequestId, (ServiceRequestStatusUpdateModel)(object)model!),
+                "quote" => await ServiceRequests.UpdateQuoteAsync(RequestId, (ServiceRequestQuoteUpdateModel)(object)model!),
+                "notes" => await ServiceRequests.UpdateNotesAsync(RequestId, (ServiceRequestNotesUpdateModel)(object)model!),
+                _ => throw new InvalidOperationException("Unknown update type.")
+            };
             ResetModels();
             _successMessage = successMessage;
         }
-        catch (HttpRequestException)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
         {
-            _errorMessage = "Unable to reach the service request API. Please try again.";
-        }
-        catch (JsonException)
-        {
-            _errorMessage = "The service request API returned an unexpected response. Please try again.";
+            _errorMessage = ex.Message;
         }
         finally
         {
@@ -208,8 +192,11 @@ else if (_request is not null)
         ServiceRequestStatuses.Quoted => Color.Primary,
         ServiceRequestStatuses.Scheduled => Color.Secondary,
         ServiceRequestStatuses.PartsOrdered => Color.Tertiary,
+        ServiceRequestStatuses.InProgress => Color.Warning,
         ServiceRequestStatuses.Completed => Color.Success,
+        ServiceRequestStatuses.Paid => Color.Success,
         ServiceRequestStatuses.Declined => Color.Error,
+        ServiceRequestStatuses.Canceled => Color.Error,
         _ => Color.Default
     };
 }

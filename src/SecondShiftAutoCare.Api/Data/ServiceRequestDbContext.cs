@@ -41,8 +41,11 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
             .IsRequired();
 
         serviceRequest.Property(request => request.ServiceType)
-            .HasMaxLength(75)
+            .HasMaxLength(1000)
             .IsRequired();
+
+        serviceRequest.Property(request => request.ServiceSpecificAnswers)
+            .HasMaxLength(1000);
 
         serviceRequest.Property(request => request.Symptoms)
             .HasMaxLength(2000)
@@ -50,6 +53,35 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
 
         serviceRequest.Property(request => request.PreferredAvailability)
             .HasMaxLength(500);
+
+        serviceRequest.Property(request => request.UrgencyLevel)
+            .HasMaxLength(50)
+            .HasDefaultValue(ServiceRequestUrgencyLevels.Routine)
+            .IsRequired();
+
+        serviceRequest.Property(request => request.IsVehicleDrivable)
+            .HasMaxLength(30);
+
+        serviceRequest.Property(request => request.VehicleLocation)
+            .HasMaxLength(300);
+
+        serviceRequest.Property(request => request.AlternateContactName)
+            .HasMaxLength(200);
+
+        serviceRequest.Property(request => request.AlternateContactPhone)
+            .HasMaxLength(30);
+
+        serviceRequest.Property(request => request.ConsentAccepted)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        serviceRequest.Property(request => request.WantsPhotoUploadLater)
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        serviceRequest.Property(request => request.IsArchived)
+            .HasDefaultValue(false)
+            .IsRequired();
 
         serviceRequest.Property(request => request.Status)
             .HasMaxLength(50)
@@ -78,5 +110,6 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
 
         serviceRequest.HasIndex(request => request.CreatedUtc);
         serviceRequest.HasIndex(request => request.Status);
+        serviceRequest.HasIndex(request => request.IsArchived);
     }
 }

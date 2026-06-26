@@ -30,8 +30,12 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     public int? Mileage { get; set; }
 
     [Required]
-    [Display(Name = "Service type")]
+    [Display(Name = "Services needed")]
     public string ServiceType { get; set; } = string.Empty;
+
+    [StringLength(1000)]
+    [Display(Name = "Service-specific answers")]
+    public string? ServiceSpecificAnswers { get; set; }
 
     [Required, StringLength(2000, MinimumLength = 10)]
     public string Symptoms { get; set; } = string.Empty;
@@ -40,11 +44,51 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [Display(Name = "Preferred availability")]
     public string? PreferredAvailability { get; set; }
 
+    [Required]
+    [Display(Name = "Urgency level")]
+    public string UrgencyLevel { get; set; } = ServiceRequestUrgencyLevels.Routine;
+
+    [Required]
+    [Display(Name = "Is the vehicle drivable?")]
+    public string? IsVehicleDrivable { get; set; }
+
+    [StringLength(300)]
+    [Display(Name = "Where is the vehicle located?")]
+    public string? VehicleLocation { get; set; }
+
+    [StringLength(200)]
+    [Display(Name = "Alternate contact name")]
+    public string? AlternateContactName { get; set; }
+
+    [Phone, StringLength(30)]
+    [Display(Name = "Alternate contact phone")]
+    public string? AlternateContactPhone { get; set; }
+
+    public bool ConsentAccepted { get; set; }
+
+    public bool WantsPhotoUploadLater { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (!string.IsNullOrWhiteSpace(ServiceType) && !ServiceTypeOptions.All.Contains(ServiceType))
+        var selectedServices = SplitServices(ServiceType).ToArray();
+        if (selectedServices.Length == 0 || selectedServices.Any(service => !ServiceTypeOptions.All.Contains(service)))
         {
-            yield return new ValidationResult("Select a valid service type.", [nameof(ServiceType)]);
+            yield return new ValidationResult("Select one or more valid service types.", [nameof(ServiceType)]);
+        }
+
+        if (!ServiceRequestUrgencyLevels.All.Contains(UrgencyLevel))
+        {
+            yield return new ValidationResult("Select a valid urgency level.", [nameof(UrgencyLevel)]);
+        }
+
+        if (IsVehicleDrivable is not ("Yes" or "No" or "Unsure"))
+        {
+            yield return new ValidationResult("Select whether the vehicle is drivable.", [nameof(IsVehicleDrivable)]);
+        }
+
+        if (!ConsentAccepted)
+        {
+            yield return new ValidationResult("Please accept the consent/disclaimer before submitting.", [nameof(ConsentAccepted)]);
         }
     }
 
@@ -59,6 +103,17 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
         Mileage = Mileage,
         ServiceType = ServiceType,
         Symptoms = Symptoms,
-        PreferredAvailability = PreferredAvailability
+        PreferredAvailability = PreferredAvailability,
+        ServiceSpecificAnswers = ServiceSpecificAnswers,
+        UrgencyLevel = UrgencyLevel,
+        IsVehicleDrivable = IsVehicleDrivable,
+        VehicleLocation = VehicleLocation,
+        AlternateContactName = AlternateContactName,
+        AlternateContactPhone = AlternateContactPhone,
+        ConsentAccepted = ConsentAccepted,
+        WantsPhotoUploadLater = WantsPhotoUploadLater
     };
+
+    private static IEnumerable<string> SplitServices(string services) =>
+        services.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 }
