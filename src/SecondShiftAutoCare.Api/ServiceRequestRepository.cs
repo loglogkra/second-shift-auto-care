@@ -62,16 +62,28 @@ public sealed class ServiceRequestRepository(ServiceRequestDbContext dbContext)
 
     public Task<ServiceRequestDto?> UpdateStatusAsync(Guid id, string status) => UpdateAsync(id, request => request.Status = status);
 
-    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, decimal? estimateLow, decimal? estimateHigh, string? partsNeeded) =>
+    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, ServiceRequestQuoteUpdateModel quote) =>
         UpdateAsync(id, request =>
         {
-            request.EstimateLow = estimateLow;
-            request.EstimateHigh = estimateHigh;
-            request.PartsNeeded = string.IsNullOrWhiteSpace(partsNeeded) ? null : partsNeeded.Trim();
+            request.EstimateLow = quote.EstimateLow;
+            request.EstimateHigh = quote.EstimateHigh;
+            request.PartsNeeded = TrimOrNull(quote.PartsNeeded);
+            request.InternalQuoteNotes = TrimOrNull(quote.InternalQuoteNotes);
+            request.LaborAmount = quote.LaborAmount;
+            request.PartsAmount = quote.PartsAmount;
+            request.ShopSuppliesAmount = quote.ShopSuppliesAmount;
+            request.TotalEstimate = quote.TotalEstimate;
+            request.QuoteTemplate = TrimOrNull(quote.QuoteTemplate);
+            request.AssumptionDisclaimerText = TrimOrNull(quote.AssumptionDisclaimerText);
+            request.GoodOption = TrimOrNull(quote.GoodOption);
+            request.BetterOption = TrimOrNull(quote.BetterOption);
+            request.BestOption = TrimOrNull(quote.BestOption);
+            request.QuoteExpirationDate = quote.QuoteExpirationDate;
+            request.CustomerApprovalStatus = quote.CustomerApprovalStatus;
         });
 
     public Task<ServiceRequestDto?> UpdateNotesAsync(Guid id, string? internalNotes) =>
-        UpdateAsync(id, request => request.InternalNotes = string.IsNullOrWhiteSpace(internalNotes) ? null : internalNotes.Trim());
+        UpdateAsync(id, request => request.InternalNotes = TrimOrNull(internalNotes));
 
     private async Task<ServiceRequestDto?> UpdateAsync(Guid id, Action<ServiceRequest> applyUpdate)
     {
@@ -87,6 +99,8 @@ public sealed class ServiceRequestRepository(ServiceRequestDbContext dbContext)
 
         return ToDto(serviceRequest);
     }
+
+    private static string? TrimOrNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static ServiceRequestDto ToDto(ServiceRequest request) => new()
     {
@@ -113,6 +127,18 @@ public sealed class ServiceRequestRepository(ServiceRequestDbContext dbContext)
         EstimateLow = request.EstimateLow,
         EstimateHigh = request.EstimateHigh,
         PartsNeeded = request.PartsNeeded,
+        InternalQuoteNotes = request.InternalQuoteNotes,
+        LaborAmount = request.LaborAmount,
+        PartsAmount = request.PartsAmount,
+        ShopSuppliesAmount = request.ShopSuppliesAmount,
+        TotalEstimate = request.TotalEstimate,
+        QuoteTemplate = request.QuoteTemplate,
+        AssumptionDisclaimerText = request.AssumptionDisclaimerText,
+        GoodOption = request.GoodOption,
+        BetterOption = request.BetterOption,
+        BestOption = request.BestOption,
+        QuoteExpirationDate = request.QuoteExpirationDate,
+        CustomerApprovalStatus = request.CustomerApprovalStatus,
         InternalNotes = request.InternalNotes,
         CreatedAtUtc = request.CreatedUtc,
         UpdatedAtUtc = request.UpdatedUtc

@@ -97,6 +97,41 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
         serviceRequest.Property(request => request.PartsNeeded)
             .HasMaxLength(1000);
 
+        serviceRequest.Property(request => request.InternalQuoteNotes)
+            .HasMaxLength(4000);
+
+        serviceRequest.Property(request => request.LaborAmount)
+            .HasPrecision(8, 2);
+
+        serviceRequest.Property(request => request.PartsAmount)
+            .HasPrecision(8, 2);
+
+        serviceRequest.Property(request => request.ShopSuppliesAmount)
+            .HasPrecision(8, 2);
+
+        serviceRequest.Property(request => request.TotalEstimate)
+            .HasPrecision(8, 2);
+
+        serviceRequest.Property(request => request.QuoteTemplate)
+            .HasMaxLength(100);
+
+        serviceRequest.Property(request => request.AssumptionDisclaimerText)
+            .HasMaxLength(2000);
+
+        serviceRequest.Property(request => request.GoodOption)
+            .HasMaxLength(2000);
+
+        serviceRequest.Property(request => request.BetterOption)
+            .HasMaxLength(2000);
+
+        serviceRequest.Property(request => request.BestOption)
+            .HasMaxLength(2000);
+
+        serviceRequest.Property(request => request.CustomerApprovalStatus)
+            .HasMaxLength(50)
+            .HasDefaultValue(ServiceRequestApprovalStatuses.Pending)
+            .IsRequired();
+
         serviceRequest.Property(request => request.InternalNotes)
             .HasMaxLength(2000);
 

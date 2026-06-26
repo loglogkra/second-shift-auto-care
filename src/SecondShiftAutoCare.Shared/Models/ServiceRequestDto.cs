@@ -69,6 +69,41 @@ public sealed class ServiceRequestDto
     [StringLength(1000)]
     public string? PartsNeeded { get; set; }
 
+    [StringLength(4000)]
+    public string? InternalQuoteNotes { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? LaborAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? PartsAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? ShopSuppliesAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? TotalEstimate { get; set; }
+
+    [StringLength(100)]
+    public string? QuoteTemplate { get; set; }
+
+    [StringLength(2000)]
+    public string? AssumptionDisclaimerText { get; set; }
+
+    [StringLength(2000)]
+    public string? GoodOption { get; set; }
+
+    [StringLength(2000)]
+    public string? BetterOption { get; set; }
+
+    [StringLength(2000)]
+    public string? BestOption { get; set; }
+
+    public DateTime? QuoteExpirationDate { get; set; }
+
+    [StringLength(50)]
+    public string CustomerApprovalStatus { get; set; } = ServiceRequestApprovalStatuses.Pending;
+
     [StringLength(2000)]
     public string? InternalNotes { get; set; }
 
