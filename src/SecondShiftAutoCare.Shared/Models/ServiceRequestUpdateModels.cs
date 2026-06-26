@@ -18,6 +18,41 @@ public sealed class ServiceRequestQuoteUpdateModel
 
     [StringLength(1000)]
     public string? PartsNeeded { get; set; }
+
+    [StringLength(4000)]
+    public string? InternalQuoteNotes { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? LaborAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? PartsAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? ShopSuppliesAmount { get; set; }
+
+    [Range(typeof(decimal), "0", "999999.99")]
+    public decimal? TotalEstimate { get; set; }
+
+    [StringLength(100)]
+    public string? QuoteTemplate { get; set; }
+
+    [StringLength(2000)]
+    public string? AssumptionDisclaimerText { get; set; }
+
+    [StringLength(2000)]
+    public string? GoodOption { get; set; }
+
+    [StringLength(2000)]
+    public string? BetterOption { get; set; }
+
+    [StringLength(2000)]
+    public string? BestOption { get; set; }
+
+    public DateTime? QuoteExpirationDate { get; set; }
+
+    [StringLength(50)]
+    public string CustomerApprovalStatus { get; set; } = ServiceRequestApprovalStatuses.Pending;
 }
 
 public sealed class ServiceRequestNotesUpdateModel
@@ -49,4 +84,27 @@ public static class ServiceRequestUrgencyLevels
     public const string Urgent = "Urgent";
 
     public static readonly string[] All = [Routine, Soon, Urgent];
+}
+
+public static class ServiceRequestApprovalStatuses
+{
+    public const string Pending = "Pending";
+    public const string Sent = "Sent";
+    public const string Approved = "Approved";
+    public const string Declined = "Declined";
+    public const string Expired = "Expired";
+
+    public static readonly string[] All = [Pending, Sent, Approved, Declined, Expired];
+}
+
+public static class QuoteTemplateOptions
+{
+    public const string GeneralRepair = "General repair";
+    public const string Diagnostics = "Diagnostics";
+    public const string Brakes = "Brakes";
+    public const string Maintenance = "Maintenance";
+    public const string SuspensionSteering = "Suspension / steering";
+    public const string StartingCharging = "Starting / charging";
+
+    public static readonly string[] All = [GeneralRepair, Diagnostics, Brakes, Maintenance, SuspensionSteering, StartingCharging];
 }

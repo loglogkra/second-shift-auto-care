@@ -1,5 +1,6 @@
 @page "/admin/requests/{RequestId:guid}"
 @inject ServiceRequestClient ServiceRequests
+@inject IJSRuntime JS
 <PageTitle>Request Detail</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
@@ -73,14 +74,73 @@ else if (_request is not null)
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
-                <MudItem xs="12" md="6">
+                <MudItem xs="12">
                     <MudCard Elevation="0" Class="action-card h-100">
                         <MudCardContent>
-                            <MudText Typo="Typo.h6" GutterBottom="true">Quote</MudText>
-                            <MudNumericField @bind-Value="_quoteModel.EstimateLow" Label="Estimate low" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
-                            <MudNumericField @bind-Value="_quoteModel.EstimateHigh" Label="Estimate high" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
-                            <MudTextField @bind-Value="_quoteModel.PartsNeeded" Label="Parts needed" Lines="4" Disabled="_isSaving" Variant="Variant.Outlined" />
-                            <MudButton Class="mt-3" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.RequestQuote">Save quote</MudButton>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap" Spacing="2">
+                                <MudText Typo="Typo.h6">Quote builder</MudText>
+                                <MudSpacer />
+                                <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">@_quoteModel.CustomerApprovalStatus</MudChip>
+                            </MudStack>
+                            <MudGrid Spacing="2" Class="mt-1">
+                                <MudItem xs="12" md="4">
+                                    <MudSelect T="string" @bind-Value="_quoteModel.QuoteTemplate" Label="Quote template" Disabled="_isSaving" Variant="Variant.Outlined">
+                                        @foreach (var template in QuoteTemplateOptions.All)
+                                        {
+                                            <MudSelectItem Value="@template">@template</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudSelect T="string" @bind-Value="_quoteModel.CustomerApprovalStatus" Label="Customer approval" Disabled="_isSaving" Variant="Variant.Outlined">
+                                        @foreach (var approvalStatus in ServiceRequestApprovalStatuses.All)
+                                        {
+                                            <MudSelectItem Value="@approvalStatus">@approvalStatus</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudDatePicker @bind-Date="_quoteModel.QuoteExpirationDate" Label="Quote expiration" Disabled="_isSaving" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudNumericField @bind-Value="_quoteModel.EstimateLow" Label="Estimate low" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudNumericField @bind-Value="_quoteModel.EstimateHigh" Label="Estimate high" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField @bind-Value="_quoteModel.LaborAmount" Label="Labor amount" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField @bind-Value="_quoteModel.PartsAmount" Label="Parts amount" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField @bind-Value="_quoteModel.ShopSuppliesAmount" Label="Shop supplies" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField @bind-Value="_quoteModel.TotalEstimate" Label="Total estimate" Disabled="_isSaving" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="$" />
+                                </MudItem>
+                                <MudItem xs="12" md="8">
+                                    <MudTextField @bind-Value="_availabilityForQuote" Label="Availability to include in quote text" Disabled="_isSaving" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="_quoteModel.PartsNeeded" Label="Parts needed" Lines="4" Disabled="_isSaving" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField @bind-Value="_quoteModel.InternalQuoteNotes" Label="Internal quote notes" Lines="4" Disabled="_isSaving" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="_quoteModel.AssumptionDisclaimerText" Label="Assumption / disclaimer text" Lines="3" Disabled="_isSaving" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="4"><MudTextField @bind-Value="_quoteModel.GoodOption" Label="Good option" Lines="3" Disabled="_isSaving" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="4"><MudTextField @bind-Value="_quoteModel.BetterOption" Label="Better option" Lines="3" Disabled="_isSaving" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" md="4"><MudTextField @bind-Value="_quoteModel.BestOption" Label="Best option" Lines="3" Disabled="_isSaving" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField Value="@GeneratedQuoteText" Label="Generated customer quote text" Lines="7" ReadOnly="true" Variant="Variant.Outlined" />
+                                    <MudButton Class="mt-3 mr-2" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.RequestQuote">Save quote</MudButton>
+                                    <MudButton Class="mt-3" Color="Color.Secondary" Variant="Variant.Outlined" OnClick="CopyQuoteTextAsync" StartIcon="@Icons.Material.Filled.ContentCopy">Copy quote text</MudButton>
+                                </MudItem>
+                            </MudGrid>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -110,6 +170,44 @@ else if (_request is not null)
     private bool _isSaving;
     private string? _errorMessage;
     private string? _successMessage;
+    private string _availabilityForQuote = string.Empty;
+
+    private string GeneratedQuoteText
+    {
+        get
+        {
+            if (_request is null)
+            {
+                return string.Empty;
+            }
+
+            var vehicle = $"{_request.VehicleYear} {_request.VehicleMake} {_request.VehicleModel}".Trim();
+            var estimate = FormatEstimateRange();
+            var availability = string.IsNullOrWhiteSpace(_availabilityForQuote) ? "the next available opening" : _availabilityForQuote.Trim();
+            var service = string.IsNullOrWhiteSpace(_quoteModel.QuoteTemplate) ? _request.ServiceType : _quoteModel.QuoteTemplate;
+            var disclaimer = string.IsNullOrWhiteSpace(_quoteModel.AssumptionDisclaimerText)
+                ? "assuming no additional issues are found once disassembled."
+                : _quoteModel.AssumptionDisclaimerText.Trim();
+
+            var lines = new List<string>
+            {
+                $"Hey {_request.CustomerName}, I reviewed your request for your {vehicle}.",
+                $"My estimate is {estimate} for {service}, {disclaimer}",
+                $"I have availability {availability}."
+            };
+
+            if (_quoteModel.QuoteExpirationDate is not null)
+            {
+                lines.Add($"This quote is valid through {_quoteModel.QuoteExpirationDate:MMM d, yyyy}.");
+            }
+
+            AddOption(lines, "Good", _quoteModel.GoodOption);
+            AddOption(lines, "Better", _quoteModel.BetterOption);
+            AddOption(lines, "Best", _quoteModel.BestOption);
+
+            return string.Join(Environment.NewLine, lines);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,6 +237,12 @@ else if (_request is not null)
     private async Task SaveQuoteAsync() => await SaveAsync("quote", _quoteModel, "Quote updated.");
 
     private async Task SaveNotesAsync() => await SaveAsync("notes", _notesModel, "Notes updated.");
+
+    private async Task CopyQuoteTextAsync()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", GeneratedQuoteText);
+        _successMessage = "Quote text copied to clipboard.";
+    }
 
     private async Task SaveAsync<T>(string segment, T model, string successMessage)
     {
@@ -180,9 +284,47 @@ else if (_request is not null)
         {
             EstimateLow = _request.EstimateLow,
             EstimateHigh = _request.EstimateHigh,
-            PartsNeeded = _request.PartsNeeded
+            PartsNeeded = _request.PartsNeeded,
+            InternalQuoteNotes = _request.InternalQuoteNotes,
+            LaborAmount = _request.LaborAmount,
+            PartsAmount = _request.PartsAmount,
+            ShopSuppliesAmount = _request.ShopSuppliesAmount,
+            TotalEstimate = _request.TotalEstimate ?? CalculateTotalEstimate(),
+            QuoteTemplate = string.IsNullOrWhiteSpace(_request.QuoteTemplate) ? QuoteTemplateOptions.GeneralRepair : _request.QuoteTemplate,
+            AssumptionDisclaimerText = _request.AssumptionDisclaimerText ?? "assuming no additional issues are found once disassembled.",
+            GoodOption = _request.GoodOption,
+            BetterOption = _request.BetterOption,
+            BestOption = _request.BestOption,
+            QuoteExpirationDate = _request.QuoteExpirationDate ?? DateTime.Today.AddDays(14),
+            CustomerApprovalStatus = string.IsNullOrWhiteSpace(_request.CustomerApprovalStatus) ? ServiceRequestApprovalStatuses.Pending : _request.CustomerApprovalStatus
         };
         _notesModel = new ServiceRequestNotesUpdateModel { InternalNotes = _request.InternalNotes };
+        _availabilityForQuote = _request.PreferredAvailability ?? string.Empty;
+    }
+
+    private decimal? CalculateTotalEstimate()
+    {
+        var total = (_request?.LaborAmount ?? 0) + (_request?.PartsAmount ?? 0) + (_request?.ShopSuppliesAmount ?? 0);
+        return total > 0 ? total : null;
+    }
+
+    private string FormatEstimateRange()
+    {
+        if (_quoteModel.EstimateLow is not null && _quoteModel.EstimateHigh is not null)
+        {
+            return $"{_quoteModel.EstimateLow:C0}–{_quoteModel.EstimateHigh:C0}";
+        }
+
+        var estimate = _quoteModel.TotalEstimate ?? _quoteModel.EstimateHigh ?? _quoteModel.EstimateLow;
+        return estimate is null ? "TBD" : $"{estimate:C0}";
+    }
+
+    private static void AddOption(List<string> lines, string label, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            lines.Add($"{label}: {value.Trim()}");
+        }
     }
 
     private static Color GetStatusColor(string status) => status switch

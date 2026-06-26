@@ -28,6 +28,18 @@ public sealed class ServiceRequest
     public decimal? EstimateLow { get; set; }
     public decimal? EstimateHigh { get; set; }
     public string? PartsNeeded { get; set; }
+    public string? InternalQuoteNotes { get; set; }
+    public decimal? LaborAmount { get; set; }
+    public decimal? PartsAmount { get; set; }
+    public decimal? ShopSuppliesAmount { get; set; }
+    public decimal? TotalEstimate { get; set; }
+    public string? QuoteTemplate { get; set; }
+    public string? AssumptionDisclaimerText { get; set; }
+    public string? GoodOption { get; set; }
+    public string? BetterOption { get; set; }
+    public string? BestOption { get; set; }
+    public DateTime? QuoteExpirationDate { get; set; }
+    public string CustomerApprovalStatus { get; set; } = ServiceRequestApprovalStatuses.Pending;
     public string? InternalNotes { get; set; }
     public DateTime CreatedUtc { get; set; }
     public DateTime UpdatedUtc { get; set; }

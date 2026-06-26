@@ -125,15 +125,20 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "Request body is required.");
         }
 
-        var validationErrors = Validate(update).ToArray();
-        if (validationErrors.Length > 0)
+        var validationErrors = Validate(update).ToList();
+        if (!ServiceRequestApprovalStatuses.All.Contains(update.CustomerApprovalStatus))
+        {
+            validationErrors.Add("Customer approval status must be one of: " + string.Join(", ", ServiceRequestApprovalStatuses.All) + ".");
+        }
+
+        if (validationErrors.Count > 0)
         {
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
         return await ExecuteDatabaseActionAsync(request, async () =>
         {
-            var serviceRequest = await repository.UpdateQuoteAsync(id, update.EstimateLow, update.EstimateHigh, update.PartsNeeded);
+            var serviceRequest = await repository.UpdateQuoteAsync(id, update);
             return serviceRequest is null
                 ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
                 : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
