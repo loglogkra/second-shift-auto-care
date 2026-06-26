@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SecondShiftAutoCare.Shared.Models;
 
@@ -14,15 +14,19 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     public async Task<HttpResponseData> CreateServiceRequest(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests")] HttpRequestData request)
     {
+        logger.LogInformation("Service request submit started.");
+
         var serviceRequest = await request.ReadFromJsonAsync<ServiceRequestDto>();
         if (serviceRequest is null)
         {
+            logger.LogWarning("Service request validation failed: request body was missing.");
             return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "Request body is required.");
         }
 
         var validationErrors = Validate(serviceRequest).ToArray();
         if (validationErrors.Length > 0)
         {
+            logger.LogWarning("Service request validation failed with {ValidationErrorCount} error(s).", validationErrors.Length);
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 
@@ -152,10 +156,10 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             logger.LogError(ex, "SqlConnectionString is missing from configuration.");
             return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "The service request database connection is not configured. Set SqlConnectionString in the Function App application settings.");
         }
-        catch (SqlException ex)
+        catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "Azure SQL operation failed.");
-            return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "The service request database is unavailable. Please try again later.");
+            logger.LogError(ex, "Service request database save failed.");
+            return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "We could not save your service request right now. Please try again later.");
         }
     }
 
