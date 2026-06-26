@@ -1,146 +1,104 @@
-using System.Data;
-using Dapper;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using SecondShiftAutoCare.Api.Data;
+using SecondShiftAutoCare.Api.Entities;
 using SecondShiftAutoCare.Shared.Models;
 
 namespace SecondShiftAutoCare.Api;
 
-public sealed class ServiceRequestRepository(IConfiguration configuration)
+public sealed class ServiceRequestRepository(ServiceRequestDbContext dbContext)
 {
-    private const string SelectColumns = """
-        Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-        ServiceType, Symptoms, PreferredAvailability, Status,
-        EstimateLow, EstimateHigh, PartsNeeded, InternalNotes, CreatedAtUtc, UpdatedAtUtc
-        """;
-
-    private const string OutputColumns = """
-        inserted.Id, inserted.CustomerName, inserted.Phone, inserted.Email, inserted.VehicleYear,
-        inserted.VehicleMake, inserted.VehicleModel, inserted.Mileage, inserted.ServiceType,
-        inserted.Symptoms, inserted.PreferredAvailability, inserted.Status, inserted.EstimateLow,
-        inserted.EstimateHigh, inserted.PartsNeeded, inserted.InternalNotes, inserted.CreatedAtUtc,
-        inserted.UpdatedAtUtc
-        """;
-
     public async Task<ServiceRequestDto> CreateAsync(ServiceRequestDto request)
     {
-        const string sql = $"""
-            INSERT INTO dbo.ServiceRequests
-            (
-                Id, CustomerName, Phone, Email, VehicleYear, VehicleMake, VehicleModel, Mileage,
-                ServiceType, Symptoms, PreferredAvailability, Status, CreatedAtUtc, UpdatedAtUtc
-            )
-            OUTPUT {OutputColumns}
-            VALUES
-            (
-                @Id, @CustomerName, @Phone, @Email, @VehicleYear, @VehicleMake, @VehicleModel, @Mileage,
-                @ServiceType, @Symptoms, @PreferredAvailability, @Status, SYSUTCDATETIME(), SYSUTCDATETIME()
-            );
-            """;
-
-        var parameters = new
+        var serviceRequest = new ServiceRequest
         {
             Id = request.Id ?? Guid.NewGuid(),
-            request.CustomerName,
-            request.Phone,
-            request.Email,
-            request.VehicleYear,
-            request.VehicleMake,
-            request.VehicleModel,
-            request.Mileage,
-            request.ServiceType,
-            request.Symptoms,
-            request.PreferredAvailability,
-            Status = ServiceRequestStatuses.New
+            CustomerName = request.CustomerName.Trim(),
+            Phone = request.Phone.Trim(),
+            Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
+            VehicleYear = request.VehicleYear!.Value,
+            VehicleMake = request.VehicleMake.Trim(),
+            VehicleModel = request.VehicleModel.Trim(),
+            Mileage = request.Mileage,
+            ServiceType = request.ServiceType.Trim(),
+            Symptoms = request.Symptoms.Trim(),
+            PreferredAvailability = string.IsNullOrWhiteSpace(request.PreferredAvailability) ? null : request.PreferredAvailability.Trim(),
+            Status = ServiceRequestStatuses.New,
+            CreatedUtc = DateTime.UtcNow,
+            UpdatedUtc = DateTime.UtcNow
         };
 
-        using var connection = CreateConnection();
-        return await connection.QuerySingleAsync<ServiceRequestDto>(sql, parameters);
+        dbContext.ServiceRequests.Add(serviceRequest);
+        await dbContext.SaveChangesAsync();
+
+        return ToDto(serviceRequest);
     }
 
     public async Task<IReadOnlyList<ServiceRequestDto>> GetAllAsync()
     {
-        const string sql = $"""
-            SELECT {SelectColumns}
-            FROM dbo.ServiceRequests
-            ORDER BY CreatedAtUtc DESC;
-            """;
+        var serviceRequests = await dbContext.ServiceRequests
+            .AsNoTracking()
+            .OrderByDescending(request => request.CreatedUtc)
+            .ToListAsync();
 
-        using var connection = CreateConnection();
-        var requests = await connection.QueryAsync<ServiceRequestDto>(sql);
-        return requests.AsList();
+        return serviceRequests.Select(ToDto).ToList();
     }
 
     public async Task<ServiceRequestDto?> GetByIdAsync(Guid id)
     {
-        const string sql = $"""
-            SELECT {SelectColumns}
-            FROM dbo.ServiceRequests
-            WHERE Id = @Id;
-            """;
+        var serviceRequest = await dbContext.ServiceRequests
+            .AsNoTracking()
+            .SingleOrDefaultAsync(request => request.Id == id);
 
-        using var connection = CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ServiceRequestDto>(sql, new { Id = id });
+        return serviceRequest is null ? null : ToDto(serviceRequest);
     }
 
-    public Task<ServiceRequestDto?> UpdateStatusAsync(Guid id, string status) => UpdateAsync(
-        id,
-        """
-        UPDATE dbo.ServiceRequests
-        SET Status = @Status,
-            UpdatedAtUtc = SYSUTCDATETIME()
-        WHERE Id = @Id;
-        """,
-        new { Id = id, Status = status });
+    public Task<ServiceRequestDto?> UpdateStatusAsync(Guid id, string status) => UpdateAsync(id, request => request.Status = status);
 
-    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, decimal? estimateLow, decimal? estimateHigh, string? partsNeeded) => UpdateAsync(
-        id,
-        """
-        UPDATE dbo.ServiceRequests
-        SET EstimateLow = @EstimateLow,
-            EstimateHigh = @EstimateHigh,
-            PartsNeeded = @PartsNeeded,
-            UpdatedAtUtc = SYSUTCDATETIME()
-        WHERE Id = @Id;
-        """,
-        new { Id = id, EstimateLow = estimateLow, EstimateHigh = estimateHigh, PartsNeeded = partsNeeded });
+    public Task<ServiceRequestDto?> UpdateQuoteAsync(Guid id, decimal? estimateLow, decimal? estimateHigh, string? partsNeeded) =>
+        UpdateAsync(id, request =>
+        {
+            request.EstimateLow = estimateLow;
+            request.EstimateHigh = estimateHigh;
+            request.PartsNeeded = string.IsNullOrWhiteSpace(partsNeeded) ? null : partsNeeded.Trim();
+        });
 
-    public Task<ServiceRequestDto?> UpdateNotesAsync(Guid id, string? internalNotes) => UpdateAsync(
-        id,
-        """
-        UPDATE dbo.ServiceRequests
-        SET InternalNotes = @InternalNotes,
-            UpdatedAtUtc = SYSUTCDATETIME()
-        WHERE Id = @Id;
-        """,
-        new { Id = id, InternalNotes = internalNotes });
+    public Task<ServiceRequestDto?> UpdateNotesAsync(Guid id, string? internalNotes) =>
+        UpdateAsync(id, request => request.InternalNotes = string.IsNullOrWhiteSpace(internalNotes) ? null : internalNotes.Trim());
 
-    private async Task<ServiceRequestDto?> UpdateAsync(Guid id, string updateSql, object parameters)
+    private async Task<ServiceRequestDto?> UpdateAsync(Guid id, Action<ServiceRequest> applyUpdate)
     {
-        using var connection = CreateConnection();
-        var rowsAffected = await connection.ExecuteAsync(updateSql, parameters);
-        if (rowsAffected == 0)
+        var serviceRequest = await dbContext.ServiceRequests.SingleOrDefaultAsync(request => request.Id == id);
+        if (serviceRequest is null)
         {
             return null;
         }
 
-        const string selectSql = $"""
-            SELECT {SelectColumns}
-            FROM dbo.ServiceRequests
-            WHERE Id = @Id;
-            """;
+        applyUpdate(serviceRequest);
+        serviceRequest.UpdatedUtc = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
 
-        return await connection.QuerySingleAsync<ServiceRequestDto>(selectSql, new { Id = id });
+        return ToDto(serviceRequest);
     }
 
-    private IDbConnection CreateConnection()
+    private static ServiceRequestDto ToDto(ServiceRequest request) => new()
     {
-        var connectionString = configuration["SqlConnectionString"];
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException("SqlConnectionString is not configured. Add it to the Azure Function App application settings.");
-        }
-
-        return new SqlConnection(connectionString);
-    }
+        Id = request.Id,
+        CustomerName = request.CustomerName,
+        Phone = request.Phone,
+        Email = request.Email,
+        VehicleYear = request.VehicleYear,
+        VehicleMake = request.VehicleMake,
+        VehicleModel = request.VehicleModel,
+        Mileage = request.Mileage,
+        ServiceType = request.ServiceType,
+        Symptoms = request.Symptoms,
+        PreferredAvailability = request.PreferredAvailability,
+        Status = request.Status,
+        EstimateLow = request.EstimateLow,
+        EstimateHigh = request.EstimateHigh,
+        PartsNeeded = request.PartsNeeded,
+        InternalNotes = request.InternalNotes,
+        CreatedAtUtc = request.CreatedUtc,
+        UpdatedAtUtc = request.UpdatedUtc
+    };
 }
