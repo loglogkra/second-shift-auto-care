@@ -20,7 +20,11 @@ var host = new HostBuilder()
                 throw new InvalidOperationException("SqlConnectionString is not configured. Add it to the Azure Function App application settings.");
             }
 
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(connectionString, sqlOptions =>
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(3),
+                    errorNumbersToAdd: null));
         });
         services.AddScoped<ServiceRequestRepository>();
     })
