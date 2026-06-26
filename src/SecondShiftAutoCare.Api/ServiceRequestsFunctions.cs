@@ -23,10 +23,31 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
             return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "Request body is required.");
         }
 
-        var validationErrors = Validate(serviceRequest).ToArray();
-        if (validationErrors.Length > 0)
+        var validationErrors = Validate(serviceRequest).ToList();
+        var requestedServices = serviceRequest.ServiceType.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!requestedServices.Any() || requestedServices.Any(service => !ServiceTypeOptions.All.Contains(service)))
         {
-            logger.LogWarning("Service request validation failed with {ValidationErrorCount} error(s).", validationErrors.Length);
+            validationErrors.Add("Service type must include one or more supported services.");
+        }
+
+        if (!ServiceRequestUrgencyLevels.All.Contains(serviceRequest.UrgencyLevel))
+        {
+            validationErrors.Add("Urgency level must be one of: " + string.Join(", ", ServiceRequestUrgencyLevels.All) + ".");
+        }
+
+        if (serviceRequest.IsVehicleDrivable is not ("Yes" or "No" or "Unsure"))
+        {
+            validationErrors.Add("Select whether the vehicle is drivable.");
+        }
+
+        if (!serviceRequest.ConsentAccepted)
+        {
+            validationErrors.Add("Consent/disclaimer acceptance is required.");
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            logger.LogWarning("Service request validation failed with {ValidationErrorCount} error(s).", validationErrors.Count);
             return await WriteValidationErrorsAsync(request, validationErrors);
         }
 

@@ -27,14 +27,36 @@ public sealed class ServiceRequestDto
     [Range(0, 999999)]
     public int? Mileage { get; set; }
 
-    [Required, StringLength(75)]
+    [Required, StringLength(1000)]
     public string ServiceType { get; set; } = string.Empty;
+
+    [StringLength(1000)]
+    public string? ServiceSpecificAnswers { get; set; }
 
     [Required, StringLength(2000)]
     public string Symptoms { get; set; } = string.Empty;
 
     [StringLength(500)]
     public string? PreferredAvailability { get; set; }
+
+    [StringLength(50)]
+    public string UrgencyLevel { get; set; } = ServiceRequestUrgencyLevels.Routine;
+
+    [StringLength(30)]
+    public string? IsVehicleDrivable { get; set; }
+
+    [StringLength(300)]
+    public string? VehicleLocation { get; set; }
+
+    [StringLength(200)]
+    public string? AlternateContactName { get; set; }
+
+    [StringLength(30)]
+    public string? AlternateContactPhone { get; set; }
+
+    public bool ConsentAccepted { get; set; }
+
+    public bool WantsPhotoUploadLater { get; set; }
 
     public string Status { get; set; } = ServiceRequestStatuses.New;
 

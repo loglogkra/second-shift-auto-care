@@ -13,8 +13,17 @@ public sealed class ServiceRequest
     public string VehicleModel { get; set; } = string.Empty;
     public int? Mileage { get; set; }
     public string ServiceType { get; set; } = string.Empty;
+    public string? ServiceSpecificAnswers { get; set; }
     public string Symptoms { get; set; } = string.Empty;
     public string? PreferredAvailability { get; set; }
+    public string UrgencyLevel { get; set; } = ServiceRequestUrgencyLevels.Routine;
+    public string? IsVehicleDrivable { get; set; }
+    public string? VehicleLocation { get; set; }
+    public string? AlternateContactName { get; set; }
+    public string? AlternateContactPhone { get; set; }
+    public bool ConsentAccepted { get; set; }
+    public bool WantsPhotoUploadLater { get; set; }
+    public bool IsArchived { get; set; }
     public string Status { get; set; } = ServiceRequestStatuses.New;
     public decimal? EstimateLow { get; set; }
     public decimal? EstimateHigh { get; set; }

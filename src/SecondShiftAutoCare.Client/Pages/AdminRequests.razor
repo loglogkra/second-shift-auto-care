@@ -1,5 +1,5 @@
 @page "/admin/requests"
-@inject HttpClient Http
+@inject ServiceRequestClient ServiceRequests
 <PageTitle>Admin Requests</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
@@ -22,18 +22,28 @@ else if (!string.IsNullOrWhiteSpace(_errorMessage))
 else
 {
     <MudGrid Spacing="3" Class="mb-4">
-        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count</MudText><MudText Typo="Typo.body2">Total</MudText></MudCardContent></MudCard></MudItem>
+        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@FilteredRequests.Count()</MudText><MudText Typo="Typo.body2">Showing</MudText></MudCardContent></MudCard></MudItem>
         <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.New)</MudText><MudText Typo="Typo.body2">New</MudText></MudCardContent></MudCard></MudItem>
         <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.Scheduled)</MudText><MudText Typo="Typo.body2">Scheduled</MudText></MudCardContent></MudCard></MudItem>
         <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.PartsOrdered)</MudText><MudText Typo="Typo.body2">Parts Ordered</MudText></MudCardContent></MudCard></MudItem>
     </MudGrid>
 
-    <MudTable Items="Requests" Hover="true" Breakpoint="Breakpoint.Sm" Class="job-board" Elevation="0">
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="4"><MudTextField @bind-Value="_searchText" Label="Search customer, phone, vehicle, service" Variant="Variant.Outlined" Immediate="true" /></MudItem>
+            <MudItem xs="12" md="3"><MudSelect @bind-Value="_statusFilter" Label="Filter by status" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var status in ServiceRequestStatuses.All) { <MudSelectItem Value="@status">@status</MudSelectItem> }</MudSelect></MudItem>
+            <MudItem xs="12" md="3"><MudSelect @bind-Value="_quickFilter" Label="Quick filter" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem><MudSelectItem Value="@("Today")">Today's jobs</MudSelectItem><MudSelectItem Value="@("Weekend")">This weekend's jobs</MudSelectItem><MudSelectItem Value="@("NeedsQuote")">Needs quote</MudSelectItem><MudSelectItem Value="@("WaitingCustomer")">Waiting on customer</MudSelectItem><MudSelectItem Value="@("WaitingParts")">Waiting on parts</MudSelectItem><MudSelectItem Value="@("CompletedMonth")">Completed this month</MudSelectItem></MudSelect></MudItem>
+            <MudItem xs="12" md="2"><MudSwitch @bind-Value="_sortNewestFirst" Color="Color.Primary" Label="Newest first" /></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable Items="FilteredRequests" Hover="true" Breakpoint="Breakpoint.Sm" Class="job-board" Elevation="0">
         <HeaderContent>
-            <MudTh>Status</MudTh><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
+            <MudTh>Status</MudTh><MudTh>Priority</MudTh><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Status"><MudChip T="string" Color="GetStatusColor(context.Status)" Variant="Variant.Filled" Size="Size.Small">@context.Status</MudChip></MudTd>
+            <MudTd DataLabel="Priority">@if (context.UrgencyLevel == ServiceRequestUrgencyLevels.Urgent) { <MudIcon Icon="@Icons.Material.Filled.PriorityHigh" Color="Color.Error" /> } else { @context.UrgencyLevel }</MudTd>
             <MudTd DataLabel="Customer"><MudText Typo="Typo.subtitle2">@context.CustomerName</MudText><MudText Typo="Typo.caption">@context.Phone</MudText></MudTd>
             <MudTd DataLabel="Vehicle">@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
             <MudTd DataLabel="Service">@context.ServiceType</MudTd>
@@ -50,33 +60,49 @@ else
     private List<ServiceRequestDto> Requests { get; set; } = [];
     private bool _isLoading = true;
     private string? _errorMessage;
+    private string _searchText = string.Empty;
+    private string _statusFilter = "All";
+    private string _quickFilter = "All";
+    private bool _sortNewestFirst = true;
+
+    private IEnumerable<ServiceRequestDto> FilteredRequests => ApplyFilters();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            using var response = await Http.GetAsync("api/admin/service-requests");
-            if (!response.IsSuccessStatusCode)
-            {
-                _errorMessage = "Unable to load service requests. Please make sure the service request API is running.";
-                return;
-            }
-
-            var requests = await response.Content.ReadFromJsonAsync<List<ServiceRequestDto>>();
-            Requests = requests?.OrderByDescending(request => request.CreatedAtUtc).ToList() ?? [];
+            var requests = await ServiceRequests.GetAllAsync();
+            Requests = requests.OrderByDescending(request => request.CreatedAtUtc).ToList();
         }
-        catch (HttpRequestException)
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
         {
-            _errorMessage = "Unable to load service requests. Please try again.";
-        }
-        catch (JsonException)
-        {
-            _errorMessage = "The service request API returned an unexpected response. Please make sure the API is running and reachable at /api/admin/service-requests.";
+            _errorMessage = ex.Message;
         }
         finally
         {
             _isLoading = false;
         }
+    }
+
+    private IEnumerable<ServiceRequestDto> ApplyFilters()
+    {
+        var query = Requests.AsEnumerable();
+        if (_statusFilter != "All") query = query.Where(r => r.Status == _statusFilter);
+        if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            query = query.Where(r => $"{r.CustomerName} {r.Phone} {r.VehicleYear} {r.VehicleMake} {r.VehicleModel} {r.ServiceType}".Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+        }
+        query = _quickFilter switch
+        {
+            "NeedsQuote" => query.Where(r => r.Status == ServiceRequestStatuses.New || r.Status == ServiceRequestStatuses.NeedInfo),
+            "WaitingCustomer" => query.Where(r => r.Status == ServiceRequestStatuses.NeedInfo || r.Status == ServiceRequestStatuses.Quoted),
+            "WaitingParts" => query.Where(r => r.Status == ServiceRequestStatuses.PartsOrdered),
+            "CompletedMonth" => query.Where(r => (r.Status == ServiceRequestStatuses.Completed || r.Status == ServiceRequestStatuses.Paid) && r.CreatedAtUtc?.Month == DateTime.Now.Month && r.CreatedAtUtc?.Year == DateTime.Now.Year),
+            "Today" => query.Where(r => r.PreferredAvailability?.Contains("today", StringComparison.OrdinalIgnoreCase) == true || r.CreatedAtUtc?.ToLocalTime().Date == DateTime.Today),
+            "Weekend" => query.Where(r => r.PreferredAvailability?.Contains("weekend", StringComparison.OrdinalIgnoreCase) == true || r.PreferredAvailability?.Contains("saturday", StringComparison.OrdinalIgnoreCase) == true || r.PreferredAvailability?.Contains("sunday", StringComparison.OrdinalIgnoreCase) == true),
+            _ => query
+        };
+        return _sortNewestFirst ? query.OrderByDescending(r => r.CreatedAtUtc) : query.OrderBy(r => r.CreatedAtUtc);
     }
 
     private static Color GetStatusColor(string status) => status switch
@@ -86,8 +112,11 @@ else
         ServiceRequestStatuses.Quoted => Color.Primary,
         ServiceRequestStatuses.Scheduled => Color.Secondary,
         ServiceRequestStatuses.PartsOrdered => Color.Tertiary,
+        ServiceRequestStatuses.InProgress => Color.Warning,
         ServiceRequestStatuses.Completed => Color.Success,
+        ServiceRequestStatuses.Paid => Color.Success,
         ServiceRequestStatuses.Declined => Color.Error,
+        ServiceRequestStatuses.Canceled => Color.Error,
         _ => Color.Default
     };
 }
