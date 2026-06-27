@@ -110,12 +110,21 @@ else
     {
         try
         {
+            Console.WriteLine("Checking auth state");
             _authState = await Auth.GetAuthStateAsync();
-            if (!_authState.IsAdmin)
+            if (!_authState.IsAuthenticated)
             {
+                Console.WriteLine("User is anonymous, not calling admin API");
                 return;
             }
 
+            if (!_authState.IsAdmin)
+            {
+                Console.WriteLine("User is authenticated but not admin, not calling admin API");
+                return;
+            }
+
+            Console.WriteLine("User is admin, loading admin requests");
             var requests = await ServiceRequests.GetAllAsync();
             Requests = requests.OrderByDescending(request => request.CreatedAtUtc).ToList();
         }
