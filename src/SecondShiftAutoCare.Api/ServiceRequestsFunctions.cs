@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +13,8 @@ namespace SecondShiftAutoCare.Api;
 
 public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository, ILogger<ServiceRequestsFunctions> logger)
 {
+    private const string AdminRole = "admin";
+
     [Function(nameof(CreateServiceRequest))]
     public async Task<HttpResponseData> CreateServiceRequest(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests")] HttpRequestData request)
@@ -64,30 +69,52 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequests))]
     public async Task<HttpResponseData> GetServiceRequests(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request) =>
-        await ExecuteDatabaseActionAsync(request, async () =>
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
+    {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
+        return await ExecuteDatabaseActionAsync(request, async () =>
         {
             var serviceRequests = await repository.GetAllAsync();
             return await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequests);
         });
+    }
 
     [Function(nameof(GetServiceRequestById))]
     public async Task<HttpResponseData> GetServiceRequestById(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
-        Guid id) =>
-        await ExecuteDatabaseActionAsync(request, async () =>
+        Guid id)
+    {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
+        return await ExecuteDatabaseActionAsync(request, async () =>
         {
             var serviceRequest = await repository.GetByIdAsync(id);
             return serviceRequest is null
                 ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
                 : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
         });
+    }
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
         Guid id)
     {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
         var update = await request.ReadFromJsonAsync<ServiceRequestStatusUpdateModel>();
         if (update is null)
         {
@@ -119,6 +146,12 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
         Guid id)
     {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
         var update = await request.ReadFromJsonAsync<ServiceRequestQuoteUpdateModel>();
         if (update is null)
         {
@@ -150,6 +183,12 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
         Guid id)
     {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
         var update = await request.ReadFromJsonAsync<ServiceRequestNotesUpdateModel>();
         if (update is null)
         {
@@ -169,6 +208,47 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
                 ? await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")
                 : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
         });
+    }
+
+
+    private async Task<HttpResponseData?> RequireAdminAsync(HttpRequestData request)
+    {
+        var principal = ReadClientPrincipal(request);
+        if (principal?.UserRoles.Any(role => string.Equals(role, AdminRole, StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            return null;
+        }
+
+        logger.LogWarning("Admin API request rejected because x-ms-client-principal did not include the admin role.");
+        return await WriteErrorAsync(request, HttpStatusCode.Unauthorized, "Admin role is required.");
+    }
+
+    private static StaticWebAppsClientPrincipal? ReadClientPrincipal(HttpRequestData request)
+    {
+        if (!request.Headers.TryGetValues("x-ms-client-principal", out var values))
+        {
+            return null;
+        }
+
+        var encodedPrincipal = values.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(encodedPrincipal))
+        {
+            return null;
+        }
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(encodedPrincipal));
+            return JsonSerializer.Deserialize<StaticWebAppsClientPrincipal>(json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private async Task<HttpResponseData> ExecuteDatabaseActionAsync(HttpRequestData request, Func<Task<HttpResponseData>> action)
@@ -209,4 +289,11 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         response.StatusCode = statusCode;
         return response;
     }
+}
+
+
+public sealed class StaticWebAppsClientPrincipal
+{
+    [JsonPropertyName("userRoles")]
+    public string[] UserRoles { get; set; } = [];
 }

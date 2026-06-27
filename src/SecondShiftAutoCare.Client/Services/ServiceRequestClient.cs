@@ -29,13 +29,21 @@ public sealed class ServiceRequestClient(HttpClient http)
     }
 
     public Task<ServiceRequestDto> UpdateStatusAsync(Guid id, ServiceRequestStatusUpdateModel model) =>
-        PutAsync($"api/admin/service-requests/{id}/status", model, "save status");
+        PatchAsync($"api/admin/service-requests/{id}/status", model, "save status");
 
     public Task<ServiceRequestDto> UpdateQuoteAsync(Guid id, ServiceRequestQuoteUpdateModel model) =>
         PutAsync($"api/admin/service-requests/{id}/quote", model, "save quote");
 
     public Task<ServiceRequestDto> UpdateNotesAsync(Guid id, ServiceRequestNotesUpdateModel model) =>
         PutAsync($"api/admin/service-requests/{id}/notes", model, "save notes");
+
+    private async Task<ServiceRequestDto> PatchAsync<T>(string uri, T model, string action)
+    {
+        var response = await http.PatchAsJsonAsync(uri, model);
+        await EnsureSuccessAsync(response, action);
+        return await response.Content.ReadFromJsonAsync<ServiceRequestDto>()
+            ?? throw new InvalidOperationException("The service request API returned an empty response.");
+    }
 
     private async Task<ServiceRequestDto> PutAsync<T>(string uri, T model, string action)
     {

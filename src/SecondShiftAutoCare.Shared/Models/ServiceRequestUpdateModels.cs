@@ -66,6 +66,7 @@ public static class ServiceRequestStatuses
     public const string New = "New";
     public const string NeedInfo = "Need Info";
     public const string Quoted = "Quoted";
+    public const string Contacted = "Contacted";
     public const string Scheduled = "Scheduled";
     public const string PartsOrdered = "Parts Ordered";
     public const string InProgress = "In Progress";
@@ -74,7 +75,7 @@ public static class ServiceRequestStatuses
     public const string Declined = "Declined";
     public const string Canceled = "Canceled";
 
-    public static readonly string[] All = [New, NeedInfo, Quoted, Scheduled, PartsOrdered, InProgress, Completed, Paid, Declined, Canceled];
+    public static readonly string[] All = [New, Contacted, NeedInfo, Quoted, Scheduled, PartsOrdered, InProgress, Completed, Paid, Declined, Canceled];
 }
 
 public static class ServiceRequestUrgencyLevels

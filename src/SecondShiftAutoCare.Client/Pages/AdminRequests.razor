@@ -1,14 +1,20 @@
 @page "/admin/requests"
+@page "/admin/dashboard"
 @inject ServiceRequestClient ServiceRequests
-<PageTitle>Admin Requests</PageTitle>
+@inject StaticWebAppsAuthClient Auth
+<PageTitle>Admin Dashboard</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
     <div>
         <MudText Typo="Typo.overline" Color="Color.Primary">Admin job board</MudText>
-        <MudText Typo="Typo.h4">Service Requests</MudText>
+        <MudText Typo="Typo.h4">Admin Dashboard</MudText>
     </div>
     <MudSpacer />
-    <MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add">New Request</MudButton>
+    @if (_currentUser is not null)
+    {
+        <MudText Typo="Typo.body2" Class="mr-2">Signed in as @_currentUser.UserDetails</MudText>
+    }
+    <MudButton Href="/admin/logout" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
 </MudStack>
 
 @if (_isLoading)
@@ -39,14 +45,23 @@ else
 
     <MudTable Items="FilteredRequests" Hover="true" Breakpoint="Breakpoint.Sm" Class="job-board" Elevation="0">
         <HeaderContent>
-            <MudTh>Status</MudTh><MudTh>Priority</MudTh><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
+            <MudTh>Status</MudTh><MudTh>Customer</MudTh><MudTh>Phone</MudTh><MudTh>Email</MudTh><MudTh>Vehicle</MudTh><MudTh>Requested Service</MudTh><MudTh>Preferred Time</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Status"><MudChip T="string" Color="GetStatusColor(context.Status)" Variant="Variant.Filled" Size="Size.Small">@context.Status</MudChip></MudTd>
-            <MudTd DataLabel="Priority">@if (context.UrgencyLevel == ServiceRequestUrgencyLevels.Urgent) { <MudIcon Icon="@Icons.Material.Filled.PriorityHigh" Color="Color.Error" /> } else { @context.UrgencyLevel }</MudTd>
-            <MudTd DataLabel="Customer"><MudText Typo="Typo.subtitle2">@context.CustomerName</MudText><MudText Typo="Typo.caption">@context.Phone</MudText></MudTd>
+            <MudTd DataLabel="Status">
+                <MudSelect T="string" Value="@context.Status" ValueChanged="@(status => UpdateStatusAsync(context, status))" Dense="true" Variant="Variant.Outlined">
+                    @foreach (var status in DashboardStatuses)
+                    {
+                        <MudSelectItem Value="@status">@status</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd DataLabel="Customer"><MudText Typo="Typo.subtitle2">@context.CustomerName</MudText></MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
             <MudTd DataLabel="Vehicle">@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
-            <MudTd DataLabel="Service">@context.ServiceType</MudTd>
+            <MudTd DataLabel="Requested Service">@context.ServiceType</MudTd>
+            <MudTd DataLabel="Preferred Time">@context.PreferredAvailability</MudTd>
             <MudTd DataLabel="Created">@context.CreatedAtUtc?.ToLocalTime().ToString("g")</MudTd>
             <MudTd><MudButton Href="@($"/admin/requests/{context.Id}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Open</MudButton></MudTd>
         </RowTemplate>
@@ -60,10 +75,13 @@ else
     private List<ServiceRequestDto> Requests { get; set; } = [];
     private bool _isLoading = true;
     private string? _errorMessage;
+    private ClientPrincipal? _currentUser;
     private string _searchText = string.Empty;
     private string _statusFilter = "All";
     private string _quickFilter = "All";
     private bool _sortNewestFirst = true;
+
+    private static readonly string[] DashboardStatuses = [ServiceRequestStatuses.New, ServiceRequestStatuses.Contacted, ServiceRequestStatuses.Scheduled, ServiceRequestStatuses.Completed, ServiceRequestStatuses.Declined];
 
     private IEnumerable<ServiceRequestDto> FilteredRequests => ApplyFilters();
 
@@ -71,6 +89,7 @@ else
     {
         try
         {
+            _currentUser = await Auth.GetCurrentUserAsync();
             var requests = await ServiceRequests.GetAllAsync();
             Requests = requests.OrderByDescending(request => request.CreatedAtUtc).ToList();
         }
@@ -105,9 +124,32 @@ else
         return _sortNewestFirst ? query.OrderByDescending(r => r.CreatedAtUtc) : query.OrderBy(r => r.CreatedAtUtc);
     }
 
+    private async Task UpdateStatusAsync(ServiceRequestDto request, string status)
+    {
+        if (request.Id is null || request.Status == status)
+        {
+            return;
+        }
+
+        try
+        {
+            var updated = await ServiceRequests.UpdateStatusAsync(request.Id.Value, new ServiceRequestStatusUpdateModel { Status = status });
+            var index = Requests.FindIndex(r => r.Id == request.Id);
+            if (index >= 0)
+            {
+                Requests[index] = updated;
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
     private static Color GetStatusColor(string status) => status switch
     {
         ServiceRequestStatuses.New => Color.Info,
+        ServiceRequestStatuses.Contacted => Color.Primary,
         ServiceRequestStatuses.NeedInfo => Color.Warning,
         ServiceRequestStatuses.Quoted => Color.Primary,
         ServiceRequestStatuses.Scheduled => Color.Secondary,
