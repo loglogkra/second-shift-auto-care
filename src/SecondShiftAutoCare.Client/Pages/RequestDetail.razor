@@ -237,7 +237,7 @@ else if (_request is not null)
         try
         {
             _authState = await Auth.GetAuthStateAsync();
-            if (!_authState.IsAdmin)
+            if (!_authState.IsAuthenticated || !_authState.IsAdmin)
             {
                 return;
             }

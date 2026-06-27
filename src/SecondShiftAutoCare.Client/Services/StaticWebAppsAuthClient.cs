@@ -22,7 +22,7 @@ public sealed class StaticWebAppsAuthClient(NavigationManager navigation)
     {
         try
         {
-            var auth = await _http.GetFromJsonAsync<AuthMeResponse>(".auth/me");
+            var auth = await _http.GetFromJsonAsync<AuthMeResponse>("/.auth/me");
             SetCurrentUser(auth?.ClientPrincipal);
         }
         catch
