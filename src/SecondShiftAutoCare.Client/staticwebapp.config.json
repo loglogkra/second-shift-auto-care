@@ -1,7 +1,16 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/api/*", "/css/*", "/_framework/*"]
+    "exclude": [
+      "/api/*",
+      "/_framework/*",
+      "/css/*",
+      "/images/*",
+      "/favicon.ico",
+      "/manifest.webmanifest",
+      "/service-worker.js",
+      "/service-worker.published.js"
+    ]
   },
   "routes": [
     {
@@ -13,6 +22,11 @@
       "route": "/admin/logout",
       "redirect": "/.auth/logout?post_logout_redirect_uri=/",
       "statusCode": 302
+    },
+    {
+      "route": "/api/service-requests",
+      "methods": ["POST"],
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/admin/*",

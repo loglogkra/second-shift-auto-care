@@ -31,7 +31,7 @@ else if (_request is not null)
         <MudItem xs="12" lg="5">
             <MudCard Elevation="0" Class="detail-card">
                 <MudCardContent>
-                    <MudText Typo="Typo.overline" Color="Color.Primary">Customer request</MudText>
+                    <MudText Typo="Typo.overline" Color="Color.Primary">Customer</MudText>
                     <MudText Typo="Typo.h4" GutterBottom="true">@_request.CustomerName</MudText>
                     <MudStack Spacing="2">
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Phone">@_request.Phone @(!string.IsNullOrWhiteSpace(_request.Email) ? $"• {_request.Email}" : string.Empty)</MudAlert>
@@ -40,13 +40,13 @@ else if (_request is not null)
                             <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
-                            <MudText Typo="Typo.subtitle2">Services</MudText>
+                            <MudText Typo="Typo.subtitle2">Request</MudText>
                             <MudText>@_request.ServiceType</MudText>
                             <MudText Typo="Typo.caption">Urgency: @_request.UrgencyLevel • Drivable: @(_request.IsVehicleDrivable ?? "Not provided")</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
                             <MudText Typo="Typo.subtitle2">Symptoms / notes</MudText>
-                            <MudText>@_request.Symptoms</MudText>
+                            <MudText>@(!string.IsNullOrWhiteSpace(_request.Symptoms) ? _request.Symptoms : "Not provided")</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
                             <MudText Typo="Typo.subtitle2">Preferred availability / location</MudText>

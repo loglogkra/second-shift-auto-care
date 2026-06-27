@@ -39,7 +39,7 @@ public sealed class ServiceRequestClient(HttpClient http)
 
     private async Task<ServiceRequestDto> PatchAsync<T>(string uri, T model, string action)
     {
-        var response = await http.PatchAsJsonAsync(uri, model);
+        var response = await http.PutAsJsonAsync(uri, model);
         await EnsureSuccessAsync(response, action);
         return await response.Content.ReadFromJsonAsync<ServiceRequestDto>()
             ?? throw new InvalidOperationException("The service request API returned an empty response.");

@@ -1,5 +1,6 @@
 @page "/request-service"
 @inject ServiceRequestClient ServiceRequests
+@inject VehicleCatalogService VehicleCatalog
 @inject NavigationManager Navigation
 <PageTitle>Request Service</PageTitle>
 
@@ -28,17 +29,25 @@
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.CustomerName" Label="Customer name" For="@(() => Model.CustomerName)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.Phone" Label="Phone" For="@(() => Model.Phone)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.Email" Label="Email (optional)" For="@(() => Model.Email)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.AlternateContactName" Label="Alternate contact name (optional)" For="@(() => Model.AlternateContactName)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.AlternateContactPhone" Label="Alternate contact phone" For="@(() => Model.AlternateContactPhone)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
                         </section>
                         <MudDivider />
                         <section>
                             <MudText Typo="Typo.h6" Class="mb-3">Vehicle</MudText>
                             <MudGrid Spacing="3">
-                                <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="Model.VehicleYear" Label="Year" For="@(() => Model.VehicleYear)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="Model.VehicleMake" Label="Make" For="@(() => Model.VehicleMake)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" sm="6" md="3"><MudTextField @bind-Value="Model.VehicleModel" Label="Model" For="@(() => Model.VehicleModel)" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudNumericField Value="Model.VehicleYear" ValueChanged="OnYearChanged" Label="Year" For="@(() => Model.VehicleYear)" Required="true" Min="1970" Max="DateTime.Now.Year + 1" Disabled="_isSubmitting" Variant="Variant.Outlined" HelperText="1970 through next year" /></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudSelect T="string" Value="Model.VehicleMake" ValueChanged="OnMakeChanged" Label="Make" For="@(() => Model.VehicleMake)" Required="true" Disabled="_isSubmitting || Model.VehicleYear is null" Variant="Variant.Outlined">
+                                    @foreach (var make in AvailableMakes)
+                                    {
+                                        <MudSelectItem Value="@make">@make</MudSelectItem>
+                                    }
+                                </MudSelect></MudItem>
+                                <MudItem xs="12" sm="6" md="3"><MudSelect T="string" @bind-Value="Model.VehicleModel" Label="Model" For="@(() => Model.VehicleModel)" Required="true" Disabled="_isSubmitting || string.IsNullOrWhiteSpace(Model.VehicleMake)" Variant="Variant.Outlined">
+                                    @foreach (var model in AvailableModels)
+                                    {
+                                        <MudSelectItem Value="@model">@model</MudSelectItem>
+                                    }
+                                </MudSelect></MudItem>
                                 <MudItem xs="12" sm="6" md="3"><MudNumericField @bind-Value="Model.Mileage" Label="Mileage (optional)" For="@(() => Model.Mileage)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
                         </section>
@@ -66,7 +75,7 @@
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.VehicleLocation" Label="Where is the vehicle located?" For="@(() => Model.VehicleLocation)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" Placeholder="Weeknights after 6, Saturday morning..." For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.ServiceSpecificAnswers" Label="Guided wizard answers" HelperText="Examples: warning lights, axle, front/rear brakes, battery age, leak location." For="@(() => Model.ServiceSpecificAnswers)" Lines="4" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms / notes" HelperText="Include noises, warning lights, when it started, or recent work." For="@(() => Model.Symptoms)" Lines="6" Required="true" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms / notes (optional)" HelperText="Optional: include noises, warning lights, when it started, or recent work." For="@(() => Model.Symptoms)" Lines="6" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
                         <MudCheckBox @bind-Value="Model.WantsPhotoUploadLater" Label="I may upload photos later if requested" Disabled="_isSubmitting" />
                             <MudCheckBox @bind-Value="Model.ConsentAccepted" Label="I understand this request is for scheduling/quoting only and does not authorize repairs." Required="true" Disabled="_isSubmitting" />
@@ -98,6 +107,23 @@
     private bool _isSubmitting;
     private string? _errorMessage;
     private HashSet<string> _selectedServices = [];
+    private IReadOnlyList<string> AvailableMakes => VehicleCatalog.GetMakes(Model.VehicleYear);
+    private IReadOnlyList<string> AvailableModels => VehicleCatalog.GetModels(Model.VehicleYear, Model.VehicleMake);
+
+    private void OnYearChanged(int? year)
+    {
+        Model.VehicleYear = year;
+        if (!AvailableModels.Contains(Model.VehicleModel))
+        {
+            Model.VehicleModel = string.Empty;
+        }
+    }
+
+    private void OnMakeChanged(string make)
+    {
+        Model.VehicleMake = make;
+        Model.VehicleModel = string.Empty;
+    }
 
     private void OnSelectedServicesChanged(IEnumerable<string> services)
     {

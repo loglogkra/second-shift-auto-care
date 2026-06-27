@@ -18,6 +18,7 @@ builder.Services.AddScoped(sp =>
 });
 
 builder.Services.AddScoped<ServiceRequestClient>();
+builder.Services.AddSingleton<VehicleCatalogService>();
 builder.Services.AddScoped<StaticWebAppsAuthClient>();
 
 builder.Services.AddMudServices(config =>

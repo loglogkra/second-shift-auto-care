@@ -14,9 +14,9 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [EmailAddress, StringLength(150)]
     public string? Email { get; set; }
 
-    [Required, Range(1900, 2100)]
+    [Required, VehicleYear]
     [Display(Name = "Vehicle year")]
-    public int? VehicleYear { get; set; }
+    public int? VehicleYear { get; set; } = DateTime.Now.Year;
 
     [Required, StringLength(75)]
     [Display(Name = "Vehicle make")]
@@ -37,8 +37,8 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [Display(Name = "Service-specific answers")]
     public string? ServiceSpecificAnswers { get; set; }
 
-    [Required, StringLength(2000, MinimumLength = 10)]
-    public string Symptoms { get; set; } = string.Empty;
+    [StringLength(2000)]
+    public string? Symptoms { get; set; }
 
     [StringLength(500)]
     [Display(Name = "Preferred availability")]
@@ -56,13 +56,6 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
     [Display(Name = "Where is the vehicle located?")]
     public string? VehicleLocation { get; set; }
 
-    [StringLength(200)]
-    [Display(Name = "Alternate contact name")]
-    public string? AlternateContactName { get; set; }
-
-    [Phone, StringLength(30)]
-    [Display(Name = "Alternate contact phone")]
-    public string? AlternateContactPhone { get; set; }
 
     public bool ConsentAccepted { get; set; }
 
@@ -108,8 +101,6 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
         UrgencyLevel = UrgencyLevel,
         IsVehicleDrivable = IsVehicleDrivable,
         VehicleLocation = VehicleLocation,
-        AlternateContactName = AlternateContactName,
-        AlternateContactPhone = AlternateContactPhone,
         ConsentAccepted = ConsentAccepted,
         WantsPhotoUploadLater = WantsPhotoUploadLater
     };

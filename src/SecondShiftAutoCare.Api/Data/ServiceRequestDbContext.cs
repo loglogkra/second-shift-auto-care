@@ -6,145 +6,50 @@ namespace SecondShiftAutoCare.Api.Data;
 
 public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbContext> options) : DbContext(options)
 {
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<ServiceRequest> ServiceRequests => Set<ServiceRequest>();
+    public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<ServiceCatalogItem> ServiceCatalogItems => Set<ServiceCatalogItem>();
+    public DbSet<VehicleMake> VehicleMakes => Set<VehicleMake>();
+    public DbSet<VehicleModel> VehicleModels => Set<VehicleModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var serviceRequest = modelBuilder.Entity<ServiceRequest>();
-
-        serviceRequest.ToTable("ServiceRequests", "dbo");
-        serviceRequest.HasKey(request => request.Id);
-
-        serviceRequest.Property(request => request.Id)
-            .ValueGeneratedNever();
-
-        serviceRequest.Property(request => request.CustomerName)
-            .HasMaxLength(100)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.Phone)
-            .HasMaxLength(30)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.Email)
-            .HasMaxLength(150);
-
-        serviceRequest.Property(request => request.VehicleYear)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.VehicleMake)
-            .HasMaxLength(75)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.VehicleModel)
-            .HasMaxLength(75)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.ServiceType)
-            .HasMaxLength(1000)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.ServiceSpecificAnswers)
-            .HasMaxLength(1000);
-
-        serviceRequest.Property(request => request.Symptoms)
-            .HasMaxLength(2000)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.PreferredAvailability)
-            .HasMaxLength(500);
-
-        serviceRequest.Property(request => request.UrgencyLevel)
-            .HasMaxLength(50)
-            .HasDefaultValue(ServiceRequestUrgencyLevels.Routine)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.IsVehicleDrivable)
-            .HasMaxLength(30);
-
-        serviceRequest.Property(request => request.VehicleLocation)
-            .HasMaxLength(300);
-
-        serviceRequest.Property(request => request.AlternateContactName)
-            .HasMaxLength(200);
-
-        serviceRequest.Property(request => request.AlternateContactPhone)
-            .HasMaxLength(30);
-
-        serviceRequest.Property(request => request.ConsentAccepted)
-            .HasDefaultValue(false)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.WantsPhotoUploadLater)
-            .HasDefaultValue(false)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.IsArchived)
-            .HasDefaultValue(false)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.Status)
-            .HasMaxLength(50)
-            .HasDefaultValue(ServiceRequestStatuses.New)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.EstimateLow)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.EstimateHigh)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.PartsNeeded)
-            .HasMaxLength(1000);
-
-        serviceRequest.Property(request => request.InternalQuoteNotes)
-            .HasMaxLength(4000);
-
-        serviceRequest.Property(request => request.LaborAmount)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.PartsAmount)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.ShopSuppliesAmount)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.TotalEstimate)
-            .HasPrecision(8, 2);
-
-        serviceRequest.Property(request => request.QuoteTemplate)
-            .HasMaxLength(100);
-
-        serviceRequest.Property(request => request.AssumptionDisclaimerText)
-            .HasMaxLength(2000);
-
-        serviceRequest.Property(request => request.GoodOption)
-            .HasMaxLength(2000);
-
-        serviceRequest.Property(request => request.BetterOption)
-            .HasMaxLength(2000);
-
-        serviceRequest.Property(request => request.BestOption)
-            .HasMaxLength(2000);
-
-        serviceRequest.Property(request => request.CustomerApprovalStatus)
-            .HasMaxLength(50)
-            .HasDefaultValue(ServiceRequestApprovalStatuses.Pending)
-            .IsRequired();
-
-        serviceRequest.Property(request => request.InternalNotes)
-            .HasMaxLength(2000);
-
-        serviceRequest.Property(request => request.CreatedUtc)
-            .HasDefaultValueSql("SYSUTCDATETIME()")
-            .IsRequired();
-
-        serviceRequest.Property(request => request.UpdatedUtc)
-            .HasDefaultValueSql("SYSUTCDATETIME()")
-            .IsRequired();
-
-        serviceRequest.HasIndex(request => request.CreatedUtc);
-        serviceRequest.HasIndex(request => request.Status);
-        serviceRequest.HasIndex(request => request.IsArchived);
+        modelBuilder.Entity<Customer>(e =>
+        {
+            e.ToTable("Customers", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired(); e.Property(x => x.Phone).HasMaxLength(30).IsRequired(); e.Property(x => x.Email).HasMaxLength(150);
+            e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
+            e.HasIndex(x => x.Phone); e.HasIndex(x => x.Email);
+        });
+        modelBuilder.Entity<Vehicle>(e =>
+        {
+            e.ToTable("Vehicles", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.Make).HasMaxLength(75).IsRequired(); e.Property(x => x.Model).HasMaxLength(75).IsRequired();
+            e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
+            e.HasOne(x => x.Customer).WithMany(x => x.Vehicles).HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.CustomerId); e.HasIndex(x => x.Year); e.HasIndex(x => new { x.Make, x.Model });
+        });
+        modelBuilder.Entity<ServiceRequest>(e =>
+        {
+            e.ToTable("ServiceRequests", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.ServiceType).HasMaxLength(1000).IsRequired(); e.Property(x => x.ServiceSpecificAnswers).HasMaxLength(1000); e.Property(x => x.Symptoms).HasMaxLength(2000); e.Property(x => x.Notes).HasMaxLength(2000); e.Property(x => x.PreferredAvailability).HasMaxLength(500);
+            e.Property(x => x.UrgencyLevel).HasMaxLength(50).HasDefaultValue(ServiceRequestUrgencyLevels.Routine).IsRequired(); e.Property(x => x.IsVehicleDrivable).HasMaxLength(30); e.Property(x => x.VehicleLocation).HasMaxLength(300);
+            e.Property(x => x.ConsentAccepted).HasDefaultValue(false).IsRequired(); e.Property(x => x.WantsPhotoUploadLater).HasDefaultValue(false).IsRequired(); e.Property(x => x.IsArchived).HasDefaultValue(false).IsRequired(); e.Property(x => x.Status).HasMaxLength(50).HasDefaultValue(ServiceRequestStatuses.New).IsRequired(); e.Property(x => x.InternalNotes).HasMaxLength(2000);
+            e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
+            e.HasOne(x => x.Customer).WithMany(x => x.ServiceRequests).HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict); e.HasOne(x => x.Vehicle).WithMany(x => x.ServiceRequests).HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.Restrict); e.HasOne(x => x.Quote).WithOne(x => x.ServiceRequest).HasForeignKey<Quote>(x => x.ServiceRequestId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.CreatedUtc); e.HasIndex(x => x.Status); e.HasIndex(x => x.IsArchived); e.HasIndex(x => x.CustomerId); e.HasIndex(x => x.VehicleId);
+        });
+        modelBuilder.Entity<Quote>(e =>
+        {
+            e.ToTable("Quotes", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.EstimateLow).HasPrecision(8,2); e.Property(x => x.EstimateHigh).HasPrecision(8,2); e.Property(x => x.LaborAmount).HasPrecision(8,2); e.Property(x => x.PartsAmount).HasPrecision(8,2); e.Property(x => x.ShopSuppliesAmount).HasPrecision(8,2); e.Property(x => x.TotalEstimate).HasPrecision(8,2);
+            e.Property(x => x.PartsNeeded).HasMaxLength(1000); e.Property(x => x.InternalQuoteNotes).HasMaxLength(4000); e.Property(x => x.QuoteTemplate).HasMaxLength(100); e.Property(x => x.AssumptionDisclaimerText).HasMaxLength(2000); e.Property(x => x.GoodOption).HasMaxLength(2000); e.Property(x => x.BetterOption).HasMaxLength(2000); e.Property(x => x.BestOption).HasMaxLength(2000); e.Property(x => x.CustomerApprovalStatus).HasMaxLength(50).HasDefaultValue(ServiceRequestApprovalStatuses.Pending).IsRequired();
+            e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.HasIndex(x => x.ServiceRequestId).IsUnique();
+        });
+        modelBuilder.Entity<ServiceCatalogItem>(e => { e.ToTable("ServiceCatalogItems", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(150).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.HasIndex(x => x.Name).IsUnique(); });
+        modelBuilder.Entity<VehicleMake>(e => { e.ToTable("VehicleMakes", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(75).IsRequired(); e.HasIndex(x => x.Name).IsUnique(); });
+        modelBuilder.Entity<VehicleModel>(e => { e.ToTable("VehicleModels", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(75).IsRequired(); e.HasOne(x => x.VehicleMake).WithMany(x => x.Models).HasForeignKey(x => x.VehicleMakeId).OnDelete(DeleteBehavior.Cascade); e.HasIndex(x => x.VehicleMakeId); e.HasIndex(x => x.Name); });
     }
 }
