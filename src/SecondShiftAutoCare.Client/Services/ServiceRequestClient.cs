@@ -16,27 +16,27 @@ public sealed class ServiceRequestClient(HttpClient http)
 
     public async Task<List<ServiceRequestDto>> GetAllAsync()
     {
-        var response = await http.GetAsync("api/admin/service-requests");
+        var response = await http.GetAsync("api/auto/service-requests");
         await EnsureSuccessAsync(response, "load service requests");
         return await response.Content.ReadFromJsonAsync<List<ServiceRequestDto>>() ?? [];
     }
 
     public async Task<ServiceRequestDto?> GetByIdAsync(Guid id)
     {
-        var response = await http.GetAsync($"api/admin/service-requests/{id}");
+        var response = await http.GetAsync($"api/auto/service-requests/{id}");
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
         await EnsureSuccessAsync(response, "load this service request");
         return await response.Content.ReadFromJsonAsync<ServiceRequestDto>();
     }
 
     public Task<ServiceRequestDto> UpdateStatusAsync(Guid id, ServiceRequestStatusUpdateModel model) =>
-        PatchAsync($"api/admin/service-requests/{id}/status", model, "save status");
+        PatchAsync($"api/auto/service-requests/{id}/status", model, "save status");
 
     public Task<ServiceRequestDto> UpdateQuoteAsync(Guid id, ServiceRequestQuoteUpdateModel model) =>
-        PutAsync($"api/admin/service-requests/{id}/quote", model, "save quote");
+        PutAsync($"api/auto/service-requests/{id}/quote", model, "save quote");
 
     public Task<ServiceRequestDto> UpdateNotesAsync(Guid id, ServiceRequestNotesUpdateModel model) =>
-        PutAsync($"api/admin/service-requests/{id}/notes", model, "save notes");
+        PutAsync($"api/auto/service-requests/{id}/notes", model, "save notes");
 
     private async Task<ServiceRequestDto> PatchAsync<T>(string uri, T model, string action)
     {
