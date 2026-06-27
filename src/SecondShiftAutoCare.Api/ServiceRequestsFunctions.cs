@@ -17,7 +17,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(CreateServiceRequest))]
     public async Task<HttpResponseData> CreateServiceRequest(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests")] HttpRequestData request)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests/")] HttpRequestData request)
     {
         logger.LogInformation("POST service-requests route hit.");
 
@@ -69,7 +69,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequests))]
     public async Task<HttpResponseData> GetServiceRequests(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/")] HttpRequestData request)
     {
         logger.LogInformation("Admin service requests route hit: {Method} {Url}.", request.Method, request.Url);
         var unauthorizedResponse = await RequireAdminAsync(request);
@@ -87,7 +87,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequestById))]
     public async Task<HttpResponseData> GetServiceRequestById(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}/")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request detail route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -108,7 +108,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status/")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request status route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -146,7 +146,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestQuote))]
     public async Task<HttpResponseData> UpdateServiceRequestQuote(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote/")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request quote route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -184,7 +184,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestNotes))]
     public async Task<HttpResponseData> UpdateServiceRequestNotes(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes/")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request notes route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
