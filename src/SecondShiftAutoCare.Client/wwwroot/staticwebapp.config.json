@@ -1,0 +1,25 @@
+{
+  "routes": [
+    {
+      "route": "/api/admin/*",
+      "allowedRoles": ["admin"]
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/api/*",
+      "/.auth/*",
+      "/_framework/*",
+      "/css/*",
+      "/images/*",
+      "/favicon.ico",
+      "/manifest.webmanifest",
+      "/service-worker.js",
+      "/service-worker.published.js"
+    ]
+  },
+  "platform": {
+    "apiRuntime": "dotnet-isolated:8.0"
+  }
+}

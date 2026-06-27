@@ -2,6 +2,7 @@
 @page "/admin/dashboard"
 @inject ServiceRequestClient ServiceRequests
 @inject StaticWebAppsAuthClient Auth
+@inject NavigationManager Navigation
 <PageTitle>Admin Dashboard</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
@@ -10,16 +11,36 @@
         <MudText Typo="Typo.h4">Admin Dashboard</MudText>
     </div>
     <MudSpacer />
-    @if (_currentUser is not null)
+    @if (_authState?.IsAuthenticated == true)
     {
-        <MudText Typo="Typo.body2" Class="mr-2">Signed in as @_currentUser.UserDetails</MudText>
+        <MudText Typo="Typo.body2" Class="mr-2">Signed in as @_authState.UserName</MudText>
     }
-    <MudButton Href="/admin/logout" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
+    <MudButton OnClick="Logout" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
 </MudStack>
 
 @if (_isLoading)
 {
     <MudPaper Class="pa-6 text-center" Elevation="0"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /><MudText Class="mt-3">Loading requests...</MudText></MudPaper>
+}
+else if (_authState?.IsAuthenticated != true)
+{
+    <MudCard Elevation="0" Class="pa-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h5" GutterBottom="true">Admin sign in required</MudText>
+            <MudText Class="mb-4">Please sign in with Microsoft before loading the admin request board.</MudText>
+            <MudButton OnClick="Login" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Login">Sign in with Microsoft</MudButton>
+        </MudCardContent>
+    </MudCard>
+}
+else if (!_authState.IsAdmin)
+{
+    <MudCard Elevation="0" Class="pa-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h5" GutterBottom="true">Access denied</MudText>
+            <MudText Class="mb-4">You are signed in but do not have admin access.</MudText>
+            <MudButton OnClick="Logout" Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Logout">Sign out</MudButton>
+        </MudCardContent>
+    </MudCard>
 }
 else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
@@ -75,7 +96,7 @@ else
     private List<ServiceRequestDto> Requests { get; set; } = [];
     private bool _isLoading = true;
     private string? _errorMessage;
-    private ClientPrincipal? _currentUser;
+    private AuthState? _authState;
     private string _searchText = string.Empty;
     private string _statusFilter = "All";
     private string _quickFilter = "All";
@@ -89,7 +110,12 @@ else
     {
         try
         {
-            _currentUser = await Auth.GetCurrentUserAsync();
+            _authState = await Auth.GetAuthStateAsync();
+            if (!_authState.IsAdmin)
+            {
+                return;
+            }
+
             var requests = await ServiceRequests.GetAllAsync();
             Requests = requests.OrderByDescending(request => request.CreatedAtUtc).ToList();
         }
@@ -102,6 +128,10 @@ else
             _isLoading = false;
         }
     }
+
+    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin/requests", forceLoad: true);
+
+    private void Logout() => Navigation.NavigateTo("/.auth/logout?post_logout_redirect_uri=/", forceLoad: true);
 
     private IEnumerable<ServiceRequestDto> ApplyFilters()
     {
