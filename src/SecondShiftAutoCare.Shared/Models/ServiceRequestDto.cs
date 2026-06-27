@@ -15,7 +15,7 @@ public sealed class ServiceRequestDto
     [EmailAddress, StringLength(150)]
     public string? Email { get; set; }
 
-    [Required, Range(1900, 2100)]
+    [Required, VehicleYear]
     public int? VehicleYear { get; set; }
 
     [Required, StringLength(75)]
@@ -33,8 +33,8 @@ public sealed class ServiceRequestDto
     [StringLength(1000)]
     public string? ServiceSpecificAnswers { get; set; }
 
-    [Required, StringLength(2000)]
-    public string Symptoms { get; set; } = string.Empty;
+    [StringLength(2000)]
+    public string? Symptoms { get; set; }
 
     [StringLength(500)]
     public string? PreferredAvailability { get; set; }
@@ -47,12 +47,6 @@ public sealed class ServiceRequestDto
 
     [StringLength(300)]
     public string? VehicleLocation { get; set; }
-
-    [StringLength(200)]
-    public string? AlternateContactName { get; set; }
-
-    [StringLength(30)]
-    public string? AlternateContactPhone { get; set; }
 
     public bool ConsentAccepted { get; set; }
 

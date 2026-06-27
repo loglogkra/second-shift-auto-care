@@ -19,7 +19,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     public async Task<HttpResponseData> CreateServiceRequest(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests")] HttpRequestData request)
     {
-        logger.LogInformation("Service request submit started.");
+        logger.LogInformation("POST service-requests route hit.");
 
         var serviceRequest = await request.ReadFromJsonAsync<ServiceRequestDto>();
         if (serviceRequest is null)
@@ -71,6 +71,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     public async Task<HttpResponseData> GetServiceRequests(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
     {
+        logger.LogInformation("Admin service requests route hit: {Method} {Url}.", request.Method, request.Url);
         var unauthorizedResponse = await RequireAdminAsync(request);
         if (unauthorizedResponse is not null)
         {
@@ -89,6 +90,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
         Guid id)
     {
+        logger.LogInformation("Admin service request detail route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
         var unauthorizedResponse = await RequireAdminAsync(request);
         if (unauthorizedResponse is not null)
         {
@@ -106,9 +108,10 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
         Guid id)
     {
+        logger.LogInformation("Admin service request status route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
         var unauthorizedResponse = await RequireAdminAsync(request);
         if (unauthorizedResponse is not null)
         {
@@ -146,6 +149,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
         Guid id)
     {
+        logger.LogInformation("Admin service request quote route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
         var unauthorizedResponse = await RequireAdminAsync(request);
         if (unauthorizedResponse is not null)
         {
@@ -183,6 +187,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
         Guid id)
     {
+        logger.LogInformation("Admin service request notes route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
         var unauthorizedResponse = await RequireAdminAsync(request);
         if (unauthorizedResponse is not null)
         {
@@ -266,6 +271,11 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         {
             logger.LogError(ex, "Service request database save failed.");
             return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "We could not save your service request right now. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected service request API error.");
+            return await WriteErrorAsync(request, HttpStatusCode.InternalServerError, "Something went wrong while processing the request. Please try again later.");
         }
     }
 

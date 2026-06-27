@@ -2,52 +2,40 @@ namespace SecondShiftAutoCare.Shared.Models;
 
 public static class ServiceTypeOptions
 {
-    public const string NotSure = "Not Sure / Diagnose It";
+    public const string Other = "Other / Not Listed";
 
-    public static readonly string[] Core =
+    public static readonly string[] All =
     [
-        "Oil Change",
+        "AC Basic Diagnosis",
+        "Alternator Replacement",
+        "Ball Joint Replacement",
+        "Battery / Charging System Test",
+        "Battery Replacement",
+        "Brake Caliper Replacement",
+        "Brake Inspection",
         "Brakes / Rotors",
-        "Starter",
+        "Cabin Air Filter",
+        "Check Engine Light Basic Diagnosis",
+        "Coolant Hose Replacement",
+        "CV Axle Replacement",
+        "Engine Air Filter",
+        "General Diagnosis",
+        "Headlight / Taillight Bulb Replacement",
+        "No-Start Diagnosis",
+        "Oil Change",
+        "Pre-Trip Inspection",
         "Serpentine Belt",
         "Spark Plugs",
+        "Starter Replacement",
         "Suspension Diagnosis",
-        "Ball Joint",
-        "Wheel Bearing",
-        "CV Axle",
-        "General Diagnosis"
-    ];
-
-    public static readonly string[] Additional =
-    [
-        "Battery Replacement",
-        "Battery / Charging System Test",
-        "Alternator Replacement",
-        "Brake Caliper Replacement",
-        "Brake Hose Replacement",
-        "Tire Rotation",
-        "Headlight / Taillight Bulb Replacement",
-        "Cabin Air Filter",
-        "Engine Air Filter",
-        "Wiper Blades",
+        "Sway Bar Link Replacement",
         "Thermostat Replacement",
+        "Tie Rod End Replacement",
+        "Tire Rotation",
+        "Used Vehicle Inspection",
         "Water Pump Replacement",
-        "Radiator Hose Replacement",
-        "Coolant Flush",
-        "Transmission Drain / Fill",
-        "Differential Fluid Service",
-        "Transfer Case Fluid Service",
-        "Sway Bar Links",
-        "Tie Rod Ends",
-        "Control Arms",
-        "Struts / Shocks",
-        "Exhaust Leak Inspection",
-        "Check Engine Light Basic Diagnosis",
-        "No-Start Diagnosis",
-        "AC Basic Diagnosis",
-        "Pre-Trip Inspection",
-        "Used Vehicle Inspection"
+        "Wheel Bearing Replacement",
+        "Wiper Blades",
+        Other
     ];
-
-    public static readonly string[] All = [NotSure, .. Core, .. Additional];
 }
