@@ -1,4 +1,6 @@
 @inherits LayoutComponentBase
+@inject StaticWebAppsAuthClient Auth
+@inject NavigationManager Navigation
 
 <MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
@@ -19,6 +21,15 @@
         </MudLink>
         <MudSpacer />
         <MudButton Href="/request-service" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EditCalendar" Class="top-cta">Request Service</MudButton>
+        @if (_authState?.IsAuthenticated == true)
+        {
+            <MudText Typo="Typo.body2" Class="mx-3 d-none d-md-inline">@_authState.UserName</MudText>
+            <MudButton OnClick="Logout" Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Login" Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" StartIcon="@Icons.Material.Filled.Login" Class="ms-2">Login</MudButton>
+        }
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0" Breakpoint="Breakpoint.Md" Variant="DrawerVariant.Responsive" Class="app-drawer">
@@ -34,7 +45,7 @@
                 <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Filled">After-hours service</MudChip>
             </MudStack>
         </MudDrawerHeader>
-        <NavMenu />
+        <NavMenu IsAdmin="@(_authState?.IsAdmin == true)" />
     </MudDrawer>
 
     <MudMainContent Class="main-content">
@@ -46,6 +57,7 @@
 
 @code {
     private bool _drawerOpen = true;
+    private AuthState? _authState;
 
     private readonly MudTheme _theme = new()
     {
@@ -71,4 +83,13 @@
     {
         _drawerOpen = !_drawerOpen;
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authState = await Auth.GetAuthStateAsync();
+    }
+
+    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin/requests", forceLoad: true);
+
+    private void Logout() => Navigation.NavigateTo("/.auth/logout?post_logout_redirect_uri=/", forceLoad: true);
 }

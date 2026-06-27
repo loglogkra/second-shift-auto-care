@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Net;
 using SecondShiftAutoCare.Shared.Models;
 
 namespace SecondShiftAutoCare.Client.Services;
@@ -56,6 +57,17 @@ public sealed class ServiceRequestClient(HttpClient http)
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, string action)
     {
         if (response.IsSuccessStatusCode) return;
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            throw new HttpRequestException("Please sign in as an admin.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.Forbidden)
+        {
+            throw new HttpRequestException("You are signed in but do not have admin access.");
+        }
+
         var body = await response.Content.ReadAsStringAsync();
         throw new HttpRequestException($"Unable to {action}. API returned {(int)response.StatusCode} {response.StatusCode}. {body}");
     }
