@@ -54,12 +54,12 @@ else if (_request is not null)
             <MudCard Elevation="0" Class="detail-card">
                 <MudCardContent>
                     <MudText Typo="Typo.overline" Color="Color.Primary">Customer</MudText>
-                    <MudText Typo="Typo.h4" GutterBottom="true">@_request.CustomerName</MudText>
+                    <MudText Typo="Typo.h4" GutterBottom="true"><MudLink Href="@($"/admin/customers/{_request.CustomerId}")">@_request.CustomerName</MudLink></MudText>
                     <MudStack Spacing="2">
                         <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Dense="true" Icon="@Icons.Material.Filled.Phone">@_request.Phone @(!string.IsNullOrWhiteSpace(_request.Email) ? $"• {_request.Email}" : string.Empty)</MudAlert>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
                             <MudText Typo="Typo.subtitle2">Vehicle</MudText>
-                            <MudText>@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
+                            <MudText><MudLink Href="@($"/admin/vehicles/{_request.VehicleId}")">@_request.VehicleYear @_request.VehicleMake @_request.VehicleModel</MudLink> @(_request.Mileage is not null ? $"• {_request.Mileage:N0} miles" : string.Empty)</MudText>
                         </MudPaper>
                         <MudPaper Class="pa-3 info-panel" Elevation="0">
                             <MudText Typo="Typo.subtitle2">Request</MudText>
@@ -161,10 +161,31 @@ else if (_request is not null)
                                     <MudTextField Value="@GeneratedQuoteText" Label="Generated customer quote text" Lines="7" ReadOnly="true" Variant="Variant.Outlined" />
                                     <MudButton Class="mt-3 mr-2" Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveQuoteAsync" Disabled="_isSaving" StartIcon="@Icons.Material.Filled.RequestQuote">Save quote</MudButton>
                                     <MudButton Class="mt-3" Color="Color.Secondary" Variant="Variant.Outlined" OnClick="CopyQuoteTextAsync" StartIcon="@Icons.Material.Filled.ContentCopy">Copy quote text</MudButton>
+                                    <MudButton Class="mt-3 ml-2" Color="Color.Primary" Variant="Variant.Outlined" OnClick="CopyQuoteLinkAsync" StartIcon="@Icons.Material.Filled.Link">Copy quote approval link</MudButton>
+                                    @if (!string.IsNullOrWhiteSpace(_request.CustomerApprovalMessage)) { <MudAlert Severity="Severity.Warning" Class="mt-2">Customer response: @_request.CustomerApprovalMessage</MudAlert> }
                                 </MudItem>
                             </MudGrid>
                         </MudCardContent>
                     </MudCard>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudStack Row="true"><MudText Typo="Typo.h6">Customer links</MudText><MudSpacer/><MudButton OnClick="CopyStatusLinkAsync" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Link">Copy customer status link</MudButton></MudStack></MudCardContent></MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudText Typo="Typo.h6">Intake answers</MudText>@if(_request.IntakeAnswers.Count==0){<MudText>None provided.</MudText>} else {@foreach(var a in _request.IntakeAnswers){<MudText><b>@a.QuestionText</b>: @(string.IsNullOrWhiteSpace(a.AnswerText)?"Not answered":a.AnswerText)</MudText>}}</MudCardContent></MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudText Typo="Typo.h6">Scheduling</MudText><MudGrid><MudItem xs="12" md="4"><MudDatePicker @bind-Date="_scheduledDate" Label="Scheduled date" Variant="Variant.Outlined" /></MudItem><MudItem xs="12" md="4"><MudTextField @bind-Value="_scheduleModel.ServiceLocationType" Label="Location type" Variant="Variant.Outlined" /></MudItem><MudItem xs="12" md="4"><MudNumericField @bind-Value="_scheduleModel.EstimatedDurationMinutes" Label="Duration minutes" Variant="Variant.Outlined" /></MudItem><MudItem xs="12"><MudTextField @bind-Value="_scheduleModel.ScheduleNotes" Label="Schedule notes" Variant="Variant.Outlined" /></MudItem></MudGrid><MudButton OnClick="SaveScheduleAsync" Color="Color.Primary" Variant="Variant.Filled">Save schedule</MudButton></MudCardContent></MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudText Typo="Typo.h6">Job checklist</MudText>@foreach(var item in _checklist){<MudStack Row="true" AlignItems="AlignItems.Center"><MudCheckBox Value="item.IsCompleted" ValueChanged="@(async (bool v)=> await ToggleChecklistAsync(item, v))" Label="@item.Text" />@if(item.IsCustom){<MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(async()=>await DeleteChecklistAsync(item))" />}</MudStack>}<MudStack Row="true"><MudTextField @bind-Value="_newChecklistText" Label="Add custom item" Variant="Variant.Outlined"/><MudButton OnClick="AddChecklistAsync">Add</MudButton></MudStack></MudCardContent></MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudText Typo="Typo.h6">Payment</MudText><MudGrid><MudItem xs="12" md="3"><MudSelect @bind-Value="_payment.PaymentStatus" Label="Status" Variant="Variant.Outlined">@foreach(var x in PaymentStatuses.All){<MudSelectItem Value="@x">@x</MudSelectItem>}</MudSelect></MudItem><MudItem xs="12" md="3"><MudSelect @bind-Value="_payment.PaymentMethod" Label="Method" Variant="Variant.Outlined">@foreach(var x in PaymentMethods.All){<MudSelectItem Value="@x">@x</MudSelectItem>}</MudSelect></MudItem><MudItem xs="12" md="3"><MudNumericField @bind-Value="_payment.AmountDue" Label="Amount due" Variant="Variant.Outlined" /></MudItem><MudItem xs="12" md="3"><MudNumericField @bind-Value="_payment.AmountPaid" Label="Amount paid" Variant="Variant.Outlined" /></MudItem><MudItem xs="12"><MudTextField @bind-Value="_payment.Notes" Label="Payment notes" Variant="Variant.Outlined" /></MudItem></MudGrid><MudButton OnClick="SavePaymentAsync" Color="Color.Primary" Variant="Variant.Filled">Save payment</MudButton></MudCardContent></MudCard>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudCard Elevation="0" Class="action-card"><MudCardContent><MudText Typo="Typo.h6">Should I take this job?</MudText><MudChip T="string" Color="@RiskColor" Class="mb-2">Score @_risk.RiskScore: @_risk.Recommendation</MudChip><MudText Typo="Typo.caption">Use this as a guide only. Final decision is yours.</MudText><MudGrid><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.RustConcern" Label="Rust concern" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.RequiresLift" Label="Requires lift" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.CustomerSuppliedParts" Label="Customer parts" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.KnownDifficultVehicle" Label="Difficult vehicle" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.SafetyCritical" Label="Safety critical" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.NeedsAlignment" Label="Needs alignment" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.NeedsTow" Label="Needs tow" /></MudItem><MudItem xs="6" md="3"><MudCheckBox @bind-Value="_risk.MobileWorkConcern" Label="Mobile concern" /></MudItem><MudItem xs="12" md="3"><MudNumericField @bind-Value="_risk.EstimatedHours" Label="Estimated hours" /></MudItem><MudItem xs="12"><MudTextField @bind-Value="_risk.Notes" Label="Risk notes" /></MudItem></MudGrid><MudButton OnClick="SaveRiskAsync" Color="Color.Primary" Variant="Variant.Filled">Save risk</MudButton></MudCardContent></MudCard>
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudCard Elevation="0" Class="action-card h-100">
@@ -194,6 +215,13 @@ else if (_request is not null)
     private string? _successMessage;
     private AuthState? _authState;
     private string _availabilityForQuote = string.Empty;
+    private List<JobChecklistItemDto> _checklist = [];
+    private string? _newChecklistText;
+    private ServiceRequestScheduleUpdateModel _scheduleModel = new();
+    private DateTime? _scheduledDate;
+    private PaymentDto _payment = new();
+    private JobRiskAssessmentDto _risk = new();
+    private Color RiskColor => _risk.Recommendation == RiskRecommendations.GoodFit ? Color.Success : _risk.Recommendation == RiskRecommendations.Maybe ? Color.Warning : Color.Error;
 
     private string GeneratedQuoteText
     {
@@ -250,6 +278,9 @@ else if (_request is not null)
             }
 
             ResetModels();
+            _checklist = await ServiceRequests.GetChecklistAsync(RequestId);
+            _payment = await ServiceRequests.GetPaymentAsync(RequestId);
+            _risk = await ServiceRequests.GetRiskAsync(RequestId);
         }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
         {
@@ -276,6 +307,14 @@ else if (_request is not null)
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", GeneratedQuoteText);
         _successMessage = "Quote text copied to clipboard.";
     }
+    private async Task CopyStatusLinkAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", Navigation.ToAbsoluteUri($"/request-status/{_request?.PublicStatusToken}" ).ToString()); _successMessage = "Customer status link copied."; }
+    private async Task CopyQuoteLinkAsync() { await JS.InvokeVoidAsync("navigator.clipboard.writeText", Navigation.ToAbsoluteUri($"/quote/{_request?.QuoteApprovalToken}" ).ToString()); _successMessage = "Quote approval link copied."; }
+    private async Task SaveScheduleAsync(){ if(_scheduledDate is not null && _scheduleModel.ScheduledStartUtc is null) _scheduleModel.ScheduledStartUtc = DateTime.SpecifyKind(_scheduledDate.Value, DateTimeKind.Local).ToUniversalTime(); await SaveAsync("schedule", _scheduleModel, "Schedule updated."); }
+    private async Task SavePaymentAsync(){ _payment = await ServiceRequests.UpdatePaymentAsync(RequestId, _payment); _successMessage="Payment updated."; }
+    private async Task SaveRiskAsync(){ _risk = await ServiceRequests.UpdateRiskAsync(RequestId, _risk); _successMessage="Risk assessment updated."; }
+    private async Task ToggleChecklistAsync(JobChecklistItemDto item, bool completed){ var updated=await ServiceRequests.UpdateChecklistItemAsync(RequestId,item.Id,new ChecklistItemUpdateModel{IsCompleted=completed}); var i=_checklist.FindIndex(x=>x.Id==item.Id); if(i>=0)_checklist[i]=updated; }
+    private async Task AddChecklistAsync(){ if(string.IsNullOrWhiteSpace(_newChecklistText))return; _checklist.Add(await ServiceRequests.AddChecklistItemAsync(RequestId,new ChecklistItemCreateModel{Text=_newChecklistText})); _newChecklistText=null; }
+    private async Task DeleteChecklistAsync(JobChecklistItemDto item){ if(!await JS.InvokeAsync<bool>("confirm", $"Remove checklist item '{item.Text}'?")) return; await ServiceRequests.DeleteChecklistItemAsync(RequestId,item.Id); _checklist.Remove(item); }
 
     private async Task SaveAsync<T>(string segment, T model, string successMessage)
     {
@@ -290,6 +329,7 @@ else if (_request is not null)
                 "status" => await ServiceRequests.UpdateStatusAsync(RequestId, (ServiceRequestStatusUpdateModel)(object)model!),
                 "quote" => await ServiceRequests.UpdateQuoteAsync(RequestId, (ServiceRequestQuoteUpdateModel)(object)model!),
                 "notes" => await ServiceRequests.UpdateNotesAsync(RequestId, (ServiceRequestNotesUpdateModel)(object)model!),
+                "schedule" => await ServiceRequests.UpdateScheduleAsync(RequestId, (ServiceRequestScheduleUpdateModel)(object)model!),
                 _ => throw new InvalidOperationException("Unknown update type.")
             };
             ResetModels();
@@ -333,6 +373,8 @@ else if (_request is not null)
         };
         _notesModel = new ServiceRequestNotesUpdateModel { InternalNotes = _request.InternalNotes };
         _availabilityForQuote = _request.PreferredAvailability ?? string.Empty;
+        _scheduleModel = new ServiceRequestScheduleUpdateModel { ScheduledStartUtc = _request.ScheduledStartUtc, ScheduledEndUtc = _request.ScheduledEndUtc, EstimatedDurationMinutes = _request.EstimatedDurationMinutes, ServiceLocationType = _request.ServiceLocationType, ScheduleNotes = _request.ScheduleNotes };
+        _scheduledDate = _request.ScheduledStartUtc?.ToLocalTime().Date;
     }
 
     private decimal? CalculateTotalEstimate()

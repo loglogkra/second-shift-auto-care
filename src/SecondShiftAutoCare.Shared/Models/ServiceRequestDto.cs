@@ -5,6 +5,8 @@ namespace SecondShiftAutoCare.Shared.Models;
 public sealed class ServiceRequestDto
 {
     public Guid? Id { get; set; }
+    public Guid? CustomerId { get; set; }
+    public Guid? VehicleId { get; set; }
 
     [Required, StringLength(100)]
     public string CustomerName { get; set; } = string.Empty;
@@ -53,6 +55,14 @@ public sealed class ServiceRequestDto
     public bool WantsPhotoUploadLater { get; set; }
 
     public string Status { get; set; } = ServiceRequestStatuses.New;
+    public bool IsArchived { get; set; }
+    public string? PublicStatusToken { get; set; }
+    public string? QuoteApprovalToken { get; set; }
+    public DateTime? ScheduledStartUtc { get; set; }
+    public DateTime? ScheduledEndUtc { get; set; }
+    public int? EstimatedDurationMinutes { get; set; }
+    public string? ServiceLocationType { get; set; }
+    public string? ScheduleNotes { get; set; }
 
     [Range(typeof(decimal), "0", "999999.99")]
     public decimal? EstimateLow { get; set; }
@@ -97,6 +107,10 @@ public sealed class ServiceRequestDto
 
     [StringLength(50)]
     public string CustomerApprovalStatus { get; set; } = ServiceRequestApprovalStatuses.Pending;
+    public DateTime? CustomerApprovalRespondedUtc { get; set; }
+    public string? CustomerApprovalMessage { get; set; }
+    public string? PaymentStatus { get; set; }
+    public List<ServiceIntakeAnswerDto> IntakeAnswers { get; set; } = [];
 
     [StringLength(2000)]
     public string? InternalNotes { get; set; }

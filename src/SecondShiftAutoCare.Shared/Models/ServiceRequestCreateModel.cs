@@ -61,6 +61,8 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
 
     public bool WantsPhotoUploadLater { get; set; }
 
+    public List<ServiceIntakeAnswerDto> IntakeAnswers { get; set; } = [];
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         var selectedServices = SplitServices(ServiceType).ToArray();
@@ -102,7 +104,8 @@ public sealed class ServiceRequestCreateModel : IValidatableObject
         IsVehicleDrivable = IsVehicleDrivable,
         VehicleLocation = VehicleLocation,
         ConsentAccepted = ConsentAccepted,
-        WantsPhotoUploadLater = WantsPhotoUploadLater
+        WantsPhotoUploadLater = WantsPhotoUploadLater,
+        IntakeAnswers = IntakeAnswers
     };
 
     private static IEnumerable<string> SplitServices(string services) =>
