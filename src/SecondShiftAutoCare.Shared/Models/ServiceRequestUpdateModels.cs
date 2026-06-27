@@ -94,8 +94,9 @@ public static class ServiceRequestApprovalStatuses
     public const string Approved = "Approved";
     public const string Declined = "Declined";
     public const string Expired = "Expired";
+    public const string Question = "Question";
 
-    public static readonly string[] All = [Pending, Sent, Approved, Declined, Expired];
+    public static readonly string[] All = [Pending, Sent, Approved, Declined, Question, Expired];
 }
 
 public static class QuoteTemplateOptions

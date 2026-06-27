@@ -81,7 +81,18 @@
                                 </MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.VehicleLocation" Label="Where is the vehicle located?" For="@(() => Model.VehicleLocation)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                                 <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.PreferredAvailability" Label="Preferred availability" Placeholder="Weeknights after 6, Saturday morning..." For="@(() => Model.PreferredAvailability)" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
-                                <MudItem xs="12" md="6"><MudTextField @bind-Value="Model.ServiceSpecificAnswers" Label="Guided wizard answers" HelperText="Examples: warning lights, axle, front/rear brakes, battery age, leak location." For="@(() => Model.ServiceSpecificAnswers)" Lines="4" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
+                                <MudItem xs="12">
+                                    @if (_intakeQuestions.Count > 0)
+                                    {
+                                        <MudPaper Class="pa-3 info-panel" Elevation="0">
+                                            <MudText Typo="Typo.subtitle2" Class="mb-2">Service-specific questions</MudText>
+                                            @foreach (var question in _intakeQuestions)
+                                            {
+                                                <MudTextField Value="@GetAnswer(question.Id)" ValueChanged="@(value => SetAnswer(question, value))" Label="@question.QuestionText" HelperText="@question.HelpText" Variant="Variant.Outlined" Class="mb-2" Disabled="_isSubmitting" />
+                                            }
+                                        </MudPaper>
+                                    }
+                                </MudItem>
                                 <MudItem xs="12"><MudTextField @bind-Value="Model.Symptoms" Label="Symptoms / notes (optional)" HelperText="Optional: include noises, warning lights, when it started, or recent work." For="@(() => Model.Symptoms)" Lines="6" Disabled="_isSubmitting" Variant="Variant.Outlined" /></MudItem>
                             </MudGrid>
                             <MudCheckBox @bind-Value="Model.WantsPhotoUploadLater" Label="I may upload photos later if requested" Disabled="_isSubmitting" />
@@ -116,6 +127,8 @@
     private HashSet<string> _selectedServices = [];
     private IReadOnlyList<string> AvailableMakes => VehicleCatalog.GetMakes(Model.VehicleYear);
     private IReadOnlyList<string> AvailableModels => VehicleCatalog.GetModels(Model.VehicleYear, Model.VehicleMake);
+    private List<ServiceIntakeQuestionDto> _intakeQuestions = [];
+    private readonly Dictionary<Guid, string?> _answers = [];
 
     private void OnYearChanged(int? year)
     {
@@ -132,11 +145,17 @@
         Model.VehicleModel = string.Empty;
     }
 
-    private void OnSelectedServicesChanged(IEnumerable<string> services)
+    private async Task OnSelectedServicesChanged(IEnumerable<string> services)
     {
         _selectedServices = services.ToHashSet();
         Model.ServiceType = string.Join(", ", _selectedServices);
+        var first = _selectedServices.FirstOrDefault();
+        _intakeQuestions = string.IsNullOrWhiteSpace(first) ? [] : await ServiceRequests.GetQuestionsAsync(first);
+        _answers.Clear();
     }
+
+    private string? GetAnswer(Guid id) => _answers.TryGetValue(id, out var value) ? value : null;
+    private void SetAnswer(ServiceIntakeQuestionDto question, string? value) => _answers[question.Id] = value;
 
     private async Task SubmitAsync()
     {
@@ -145,8 +164,10 @@
 
         try
         {
-            await ServiceRequests.CreateAsync(Model);
-            Navigation.NavigateTo("/request-submitted");
+            Model.IntakeAnswers = _intakeQuestions.Select(q => new ServiceIntakeAnswerDto { QuestionId = q.Id, QuestionText = q.QuestionText, AnswerText = GetAnswer(q.Id) }).ToList();
+            Model.ServiceSpecificAnswers = string.Join(Environment.NewLine, Model.IntakeAnswers.Where(a => !string.IsNullOrWhiteSpace(a.AnswerText)).Select(a => $"{a.QuestionText}: {a.AnswerText}"));
+            var created = await ServiceRequests.CreateAsync(Model);
+            Navigation.NavigateTo($"/request-submitted?token={created.PublicStatusToken}");
             return;
         }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)

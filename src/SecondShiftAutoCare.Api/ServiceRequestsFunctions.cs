@@ -60,7 +60,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         {
             var created = await repository.CreateAsync(serviceRequest);
             var response = request.CreateResponse(HttpStatusCode.Created);
-            response.Headers.Add("Location", $"/api/auto/service-requests/{created.Id}");
+            response.Headers.Add("Location", $"/api/service-requests/{created.Id}");
             await response.WriteAsJsonAsync(created);
             response.StatusCode = HttpStatusCode.Created;
             return response;
@@ -69,7 +69,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(GetServiceRequests))]
     public async Task<HttpResponseData> GetServiceRequests(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auto/service-requests/")] HttpRequestData request)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests")] HttpRequestData request)
     {
         logger.LogInformation("Admin service requests route hit: {Method} {Url}.", request.Method, request.Url);
         var unauthorizedResponse = await RequireAdminAsync(request);
@@ -80,14 +80,14 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
         return await ExecuteDatabaseActionAsync(request, async () =>
         {
-            var serviceRequests = await repository.GetAllAsync();
+            var serviceRequests = await repository.GetAllAsync(ReadQuery(request));
             return await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequests);
         });
     }
 
     [Function(nameof(GetServiceRequestById))]
     public async Task<HttpResponseData> GetServiceRequestById(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "auto/service-requests/{id:guid}/")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request detail route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -108,7 +108,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestStatus))]
     public async Task<HttpResponseData> UpdateServiceRequestStatus(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "auto/service-requests/{id:guid}/status/")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/status")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request status route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -146,7 +146,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestQuote))]
     public async Task<HttpResponseData> UpdateServiceRequestQuote(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "auto/service-requests/{id:guid}/quote/")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/quote")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request quote route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -184,7 +184,7 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
 
     [Function(nameof(UpdateServiceRequestNotes))]
     public async Task<HttpResponseData> UpdateServiceRequestNotes(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "auto/service-requests/{id:guid}/notes/")] HttpRequestData request,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/notes")] HttpRequestData request,
         Guid id)
     {
         logger.LogInformation("Admin service request notes route hit: {Method} {Url} for request {RequestId}.", request.Method, request.Url, id);
@@ -214,6 +214,69 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
                 : await WriteJsonAsync(request, HttpStatusCode.OK, serviceRequest);
         });
     }
+
+    [Function(nameof(GetServiceIntakeQuestions))]
+    public async Task<HttpResponseData> GetServiceIntakeQuestions([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "service-intake-questions/{serviceType}")] HttpRequestData request, string serviceType) =>
+        await ExecuteDatabaseActionAsync(request, async () => await WriteJsonAsync(request, HttpStatusCode.OK, await repository.GetQuestionsAsync(serviceType)));
+
+    [Function(nameof(GetPublicRequestStatus))]
+    public async Task<HttpResponseData> GetPublicRequestStatus([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request-status/{token}")] HttpRequestData request, string token) =>
+        await ExecuteDatabaseActionAsync(request, async () => (await repository.GetPublicStatusAsync(token)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Request status was not found."));
+
+    [Function(nameof(GetPublicQuote))]
+    public async Task<HttpResponseData> GetPublicQuote([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "quote/{token}")] HttpRequestData request, string token) =>
+        await ExecuteDatabaseActionAsync(request, async () => (await repository.GetPublicQuoteAsync(token)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Quote was not found."));
+
+    [Function(nameof(SavePublicQuoteDecision))]
+    public async Task<HttpResponseData> SavePublicQuoteDecision([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "quote/{token}/decision")] HttpRequestData request, string token)
+    { var decision = await request.ReadFromJsonAsync<QuoteDecisionModel>(); if (decision is null) return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "Request body is required."); if (decision.Decision is not (ServiceRequestApprovalStatuses.Approved or ServiceRequestApprovalStatuses.Declined or ServiceRequestApprovalStatuses.Question)) return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "Decision must be Approved, Declined, or Question."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.SaveQuoteDecisionAsync(token, decision)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Quote was not found.")); }
+
+    [Function(nameof(GetChecklist))]
+    public async Task<HttpResponseData> GetChecklist([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}/checklist")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetChecklistAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(AddChecklistItem))]
+    public async Task<HttpResponseData> AddChecklistItem([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "admin/service-requests/{id:guid}/checklist")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<ChecklistItemCreateModel>(); if(model is null || string.IsNullOrWhiteSpace(model.Text)) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Text is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.AddChecklistItemAsync(id, model.Text)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(UpdateChecklistItem))]
+    public async Task<HttpResponseData> UpdateChecklistItem([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/checklist/{itemId:guid}")] HttpRequestData request, Guid id, Guid itemId)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<ChecklistItemUpdateModel>(); if(model is null) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Request body is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.UpdateChecklistItemAsync(id, itemId, model.IsCompleted)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Checklist item was not found.")); }
+
+    [Function(nameof(DeleteChecklistItem))]
+    public async Task<HttpResponseData> DeleteChecklistItem([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "admin/service-requests/{id:guid}/checklist/{itemId:guid}")] HttpRequestData request, Guid id, Guid itemId)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => await WriteJsonAsync(request, (await repository.DeleteChecklistItemAsync(id,itemId)) ? HttpStatusCode.OK : HttpStatusCode.NotFound, new { deleted = true })); }
+
+    [Function(nameof(UpdateSchedule))]
+    public async Task<HttpResponseData> UpdateSchedule([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/schedule")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<ServiceRequestScheduleUpdateModel>(); if(model is null) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Request body is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.UpdateScheduleAsync(id, model)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(GetPayment))]
+    public async Task<HttpResponseData> GetPayment([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}/payment")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetPaymentAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(UpdatePayment))]
+    public async Task<HttpResponseData> UpdatePayment([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/payment")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<PaymentDto>(); if(model is null) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Request body is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.UpdatePaymentAsync(id, model)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(GetRiskAssessment))]
+    public async Task<HttpResponseData> GetRiskAssessment([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/service-requests/{id:guid}/risk-assessment")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetRiskAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(UpdateRiskAssessment))]
+    public async Task<HttpResponseData> UpdateRiskAssessment([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "admin/service-requests/{id:guid}/risk-assessment")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<JobRiskAssessmentDto>(); if(model is null) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Request body is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.UpdateRiskAsync(id, model)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
+
+    [Function(nameof(GetCustomerDetail))]
+    public async Task<HttpResponseData> GetCustomerDetail([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/customers/{id:guid}")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetCustomerAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Customer was not found.")); }
+
+    [Function(nameof(GetVehicleDetail))]
+    public async Task<HttpResponseData> GetVehicleDetail([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "admin/vehicles/{id:guid}")] HttpRequestData request, Guid id)
+    { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetVehicleAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Vehicle was not found.")); }
+
+    private static ServiceRequestQuery ReadQuery(HttpRequestData request)
+    { var q = request.Url.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries).Select(part => part.Split('=', 2)).ToDictionary(parts => Uri.UnescapeDataString(parts[0]), parts => parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty, StringComparer.OrdinalIgnoreCase); string? Get(string key)=>q.TryGetValue(key,out var v)?v:null; return new ServiceRequestQuery{Search=Get("search"),Status=Get("status"),ServiceType=Get("serviceType"),PaymentStatus=Get("paymentStatus"),ScheduledFilter=Get("scheduledFilter"),Sort=Get("sort"),IncludeArchived=bool.TryParse(Get("includeArchived"),out var b)&&b,FromDate=DateTime.TryParse(Get("fromDate"),out var f)?f:null,ToDate=DateTime.TryParse(Get("toDate"),out var t)?t:null}; }
 
 
     private async Task<HttpResponseData?> RequireAdminAsync(HttpRequestData request)

@@ -59,7 +59,9 @@ else
         <MudGrid Spacing="2">
             <MudItem xs="12" md="4"><MudTextField @bind-Value="_searchText" Label="Search customer, phone, vehicle, service" Variant="Variant.Outlined" Immediate="true" /></MudItem>
             <MudItem xs="12" md="3"><MudSelect @bind-Value="_statusFilter" Label="Filter by status" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var status in ServiceRequestStatuses.All) { <MudSelectItem Value="@status">@status</MudSelectItem> }</MudSelect></MudItem>
-            <MudItem xs="12" md="3"><MudSelect @bind-Value="_quickFilter" Label="Quick filter" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem><MudSelectItem Value="@("Today")">Today's jobs</MudSelectItem><MudSelectItem Value="@("Weekend")">This weekend's jobs</MudSelectItem><MudSelectItem Value="@("NeedsQuote")">Needs quote</MudSelectItem><MudSelectItem Value="@("WaitingCustomer")">Waiting on customer</MudSelectItem><MudSelectItem Value="@("WaitingParts")">Waiting on parts</MudSelectItem><MudSelectItem Value="@("CompletedMonth")">Completed this month</MudSelectItem></MudSelect></MudItem>
+            <MudItem xs="12" md="3"><MudSelect @bind-Value="_serviceFilter" Label="Service" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var service in ServiceTypeOptions.All) { <MudSelectItem Value="@service">@service</MudSelectItem> }</MudSelect></MudItem>
+            <MudItem xs="12" md="3"><MudSelect @bind-Value="_paymentFilter" Label="Payment" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var status in PaymentStatuses.All) { <MudSelectItem Value="@status">@status</MudSelectItem> }</MudSelect></MudItem>
+            <MudItem xs="12" md="3"><MudSelect @bind-Value="_quickFilter" Label="Scheduled" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem><MudSelectItem Value="@("Unscheduled")">Unscheduled</MudSelectItem><MudSelectItem Value="@("Today")">Today</MudSelectItem><MudSelectItem Value="@("Weekend")">This weekend</MudSelectItem><MudSelectItem Value="@("Next7Days")">Next 7 days</MudSelectItem><MudSelectItem Value="@("NeedsQuote")">Needs quote</MudSelectItem><MudSelectItem Value="@("WaitingCustomer")">Waiting on customer</MudSelectItem><MudSelectItem Value="@("WaitingParts")">Waiting on parts</MudSelectItem><MudSelectItem Value="@("CompletedMonth")">Completed this month</MudSelectItem></MudSelect></MudItem>
             <MudItem xs="12" md="2"><MudSwitch @bind-Value="_sortNewestFirst" Color="Color.Primary" Label="Newest first" /></MudItem>
         </MudGrid>
     </MudPaper>
@@ -100,6 +102,8 @@ else
     private string _searchText = string.Empty;
     private string _statusFilter = "All";
     private string _quickFilter = "All";
+    private string _serviceFilter = "All";
+    private string _paymentFilter = "All";
     private bool _sortNewestFirst = true;
 
     private static readonly string[] DashboardStatuses = [ServiceRequestStatuses.New, ServiceRequestStatuses.Contacted, ServiceRequestStatuses.Scheduled, ServiceRequestStatuses.Completed, ServiceRequestStatuses.Declined];
@@ -146,6 +150,8 @@ else
     {
         var query = Requests.AsEnumerable();
         if (_statusFilter != "All") query = query.Where(r => r.Status == _statusFilter);
+        if (_serviceFilter != "All") query = query.Where(r => r.ServiceType.Contains(_serviceFilter, StringComparison.OrdinalIgnoreCase));
+        if (_paymentFilter != "All") query = query.Where(r => r.PaymentStatus == _paymentFilter);
         if (!string.IsNullOrWhiteSpace(_searchText))
         {
             query = query.Where(r => $"{r.CustomerName} {r.Phone} {r.VehicleYear} {r.VehicleMake} {r.VehicleModel} {r.ServiceType}".Contains(_searchText, StringComparison.OrdinalIgnoreCase));
@@ -156,8 +162,10 @@ else
             "WaitingCustomer" => query.Where(r => r.Status == ServiceRequestStatuses.NeedInfo || r.Status == ServiceRequestStatuses.Quoted),
             "WaitingParts" => query.Where(r => r.Status == ServiceRequestStatuses.PartsOrdered),
             "CompletedMonth" => query.Where(r => (r.Status == ServiceRequestStatuses.Completed || r.Status == ServiceRequestStatuses.Paid) && r.CreatedAtUtc?.Month == DateTime.Now.Month && r.CreatedAtUtc?.Year == DateTime.Now.Year),
-            "Today" => query.Where(r => r.PreferredAvailability?.Contains("today", StringComparison.OrdinalIgnoreCase) == true || r.CreatedAtUtc?.ToLocalTime().Date == DateTime.Today),
-            "Weekend" => query.Where(r => r.PreferredAvailability?.Contains("weekend", StringComparison.OrdinalIgnoreCase) == true || r.PreferredAvailability?.Contains("saturday", StringComparison.OrdinalIgnoreCase) == true || r.PreferredAvailability?.Contains("sunday", StringComparison.OrdinalIgnoreCase) == true),
+            "Unscheduled" => query.Where(r => r.ScheduledStartUtc is null),
+            "Today" => query.Where(r => r.ScheduledStartUtc?.ToLocalTime().Date == DateTime.Today),
+            "Weekend" => query.Where(r => r.ScheduledStartUtc is not null && (r.ScheduledStartUtc.Value.ToLocalTime().DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)),
+            "Next7Days" => query.Where(r => r.ScheduledStartUtc is not null && r.ScheduledStartUtc.Value.ToLocalTime() <= DateTime.Now.AddDays(7)),
             _ => query
         };
         return _sortNewestFirst ? query.OrderByDescending(r => r.CreatedAtUtc) : query.OrderBy(r => r.CreatedAtUtc);

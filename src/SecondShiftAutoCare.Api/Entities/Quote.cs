@@ -22,6 +22,8 @@ public sealed class Quote
     public string? BestOption { get; set; }
     public string CustomerApprovalStatus { get; set; } = ServiceRequestApprovalStatuses.Pending;
     public DateTime? QuoteExpirationDate { get; set; }
+    public DateTime? CustomerApprovalRespondedUtc { get; set; }
+    public string? CustomerApprovalMessage { get; set; }
     public DateTime CreatedUtc { get; set; }
     public DateTime UpdatedUtc { get; set; }
 }
