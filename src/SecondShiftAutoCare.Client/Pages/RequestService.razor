@@ -88,7 +88,7 @@
                                             <MudText Typo="Typo.subtitle2" Class="mb-2">Service-specific questions</MudText>
                                             @foreach (var question in _intakeQuestions)
                                             {
-                                                <MudTextField Value="@GetAnswer(question.Id)" ValueChanged="@((string? value) => SetAnswer(question, value))" Label="@question.QuestionText" HelperText="@question.HelpText" Variant="Variant.Outlined" Class="mb-2" Disabled="_isSubmitting" />
+                                                @* <MudTextField Value="@GetAnswer(question.Id)" ValueChanged="@(value => SetAnswer(question, value))" Label="@question.QuestionText" HelperText="@question.HelpText" Variant="Variant.Outlined" Class="mb-2" Disabled="_isSubmitting" /> *@
                                             }
                                         </MudPaper>
                                     }
@@ -155,17 +155,7 @@
     }
 
     private string? GetAnswer(Guid id) => _answers.TryGetValue(id, out var value) ? value : null;
-    private void SetAnswer(ServiceIntakeQuestionDto question, string? value) 
-    { 
-        if (value == null)
-        {
-            _answers.Remove(question.Id);
-        }
-        else
-        {
-            _answers[question.Id] = value;
-        }
-    }
+    private void SetAnswer(ServiceIntakeQuestionDto question, string? value) => _answers[question.Id] = value;
 
     private async Task SubmitAsync()
     {

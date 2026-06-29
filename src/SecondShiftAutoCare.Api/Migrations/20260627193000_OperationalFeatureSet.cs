@@ -21,7 +21,6 @@ public partial class OperationalFeatureSet : Migration
 
         migrationBuilder.CreateTable(
             name: "ServiceIntakeQuestions",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -34,14 +33,12 @@ public partial class OperationalFeatureSet : Migration
                 SortOrder = table.Column<int>(nullable: false),
                 IsActive = table.Column<bool>(nullable: false)
             },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_ServiceIntakeQuestions", x => x.Id);
-            });
+            schema: "dbo",
+            constraints: table => table.PrimaryKey("PK_ServiceIntakeQuestions", x => x.Id)
+        );
 
         migrationBuilder.CreateTable(
             name: "ChecklistTemplates",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -50,14 +47,12 @@ public partial class OperationalFeatureSet : Migration
                 IsActive = table.Column<bool>(nullable: false),
                 SortOrder = table.Column<int>(nullable: false)
             },
-            constraints: table =>
-            {
-                table.PrimaryKey("PK_ChecklistTemplates", x => x.Id);
-            });
+            schema: "dbo",
+            constraints: table => table.PrimaryKey("PK_ChecklistTemplates", x => x.Id)
+        );
 
         migrationBuilder.CreateTable(
             name: "Payments",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -71,6 +66,7 @@ public partial class OperationalFeatureSet : Migration
                 CreatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
                 UpdatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()")
             },
+            schema: "dbo",
             constraints: table =>
             {
                 table.PrimaryKey("PK_Payments", x => x.Id);
@@ -81,11 +77,11 @@ public partial class OperationalFeatureSet : Migration
                     principalSchema: "dbo",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "JobRiskAssessments",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -105,6 +101,7 @@ public partial class OperationalFeatureSet : Migration
                 CreatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
                 UpdatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()")
             },
+            schema: "dbo",
             constraints: table =>
             {
                 table.PrimaryKey("PK_JobRiskAssessments", x => x.Id);
@@ -115,11 +112,11 @@ public partial class OperationalFeatureSet : Migration
                     principalSchema: "dbo",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "JobChecklistItems",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -132,6 +129,7 @@ public partial class OperationalFeatureSet : Migration
                 CreatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
                 UpdatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()")
             },
+            schema: "dbo",
             constraints: table =>
             {
                 table.PrimaryKey("PK_JobChecklistItems", x => x.Id);
@@ -142,11 +140,11 @@ public partial class OperationalFeatureSet : Migration
                     principalSchema: "dbo",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "ServiceIntakeAnswers",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -156,6 +154,7 @@ public partial class OperationalFeatureSet : Migration
                 AnswerText = table.Column<string>(maxLength: 2000, nullable: true),
                 CreatedUtc = table.Column<DateTime>(nullable: false, defaultValueSql: "SYSUTCDATETIME()")
             },
+            schema: "dbo",
             constraints: table =>
             {
                 table.PrimaryKey("PK_ServiceIntakeAnswers", x => x.Id);
@@ -173,11 +172,11 @@ public partial class OperationalFeatureSet : Migration
                     principalSchema: "dbo",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.SetNull);
-            });
+            }
+        );
 
         migrationBuilder.CreateTable(
             name: "ChecklistTemplateItems",
-            schema: "dbo",
             columns: table => new
             {
                 Id = table.Column<Guid>(nullable: false),
@@ -186,6 +185,7 @@ public partial class OperationalFeatureSet : Migration
                 SortOrder = table.Column<int>(nullable: false),
                 IsRequired = table.Column<bool>(nullable: false)
             },
+            schema: "dbo",
             constraints: table =>
             {
                 table.PrimaryKey("PK_ChecklistTemplateItems", x => x.Id);
@@ -196,60 +196,83 @@ public partial class OperationalFeatureSet : Migration
                     principalSchema: "dbo",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
-            });
+            }
+        );
 
         migrationBuilder.CreateIndex(
             name: "IX_ServiceRequests_PublicStatusToken",
             table: "ServiceRequests",
-            schema: "dbo",
             column: "PublicStatusToken",
+            schema: "dbo",
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "IX_ServiceRequests_QuoteApprovalToken",
             table: "ServiceRequests",
-            schema: "dbo",
             column: "QuoteApprovalToken",
+            schema: "dbo",
             unique: true,
             filter: "[QuoteApprovalToken] IS NOT NULL");
 
         migrationBuilder.CreateIndex(
             name: "IX_Payments_ServiceRequestId",
             table: "Payments",
-            schema: "dbo",
             column: "ServiceRequestId",
+            schema: "dbo",
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "IX_JobRiskAssessments_ServiceRequestId",
             table: "JobRiskAssessments",
-            schema: "dbo",
             column: "ServiceRequestId",
+            schema: "dbo",
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "IX_JobChecklistItems_ServiceRequestId",
             table: "JobChecklistItems",
-            schema: "dbo",
-            column: "ServiceRequestId");
+            column: "ServiceRequestId",
+            schema: "dbo");
 
         migrationBuilder.CreateIndex(
             name: "IX_ServiceIntakeAnswers_ServiceRequestId",
             table: "ServiceIntakeAnswers",
-            schema: "dbo",
-            column: "ServiceRequestId");
+            column: "ServiceRequestId",
+            schema: "dbo");
 
         migrationBuilder.CreateIndex(
             name: "IX_ServiceIntakeAnswers_QuestionId",
             table: "ServiceIntakeAnswers",
-            schema: "dbo",
-            column: "QuestionId");
+            column: "QuestionId",
+            schema: "dbo");
 
         migrationBuilder.CreateIndex(
             name: "IX_ChecklistTemplateItems_ChecklistTemplateId",
             table: "ChecklistTemplateItems",
-            schema: "dbo",
-            column: "ChecklistTemplateId");
+            column: "ChecklistTemplateId",
+            schema: "dbo");
     }
-    protected override void Down(MigrationBuilder migrationBuilder) { migrationBuilder.DropTable("ChecklistTemplateItems", "dbo"); migrationBuilder.DropTable("JobChecklistItems", "dbo"); migrationBuilder.DropTable("JobRiskAssessments", "dbo"); migrationBuilder.DropTable("Payments", "dbo"); migrationBuilder.DropTable("ServiceIntakeAnswers", "dbo"); migrationBuilder.DropTable("ChecklistTemplates", "dbo"); migrationBuilder.DropTable("ServiceIntakeQuestions", "dbo"); migrationBuilder.DropIndex("IX_ServiceRequests_PublicStatusToken", "ServiceRequests", "dbo"); migrationBuilder.DropIndex("IX_ServiceRequests_QuoteApprovalToken", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("EstimatedDurationMinutes", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("PublicStatusToken", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("QuoteApprovalToken", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("ScheduleNotes", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("ScheduledEndUtc", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("ScheduledStartUtc", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("ServiceLocationType", "ServiceRequests", "dbo"); migrationBuilder.DropColumn("CustomerApprovalMessage", "Quotes", "dbo"); migrationBuilder.DropColumn("CustomerApprovalRespondedUtc", "Quotes", "dbo"); }
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropTable(name: "ChecklistTemplateItems", schema: "dbo");
+        migrationBuilder.DropTable(name: "JobChecklistItems", schema: "dbo");
+        migrationBuilder.DropTable(name: "JobRiskAssessments", schema: "dbo");
+        migrationBuilder.DropTable(name: "Payments", schema: "dbo");
+        migrationBuilder.DropTable(name: "ServiceIntakeAnswers", schema: "dbo");
+        migrationBuilder.DropTable(name: "ChecklistTemplates", schema: "dbo");
+        migrationBuilder.DropTable(name: "ServiceIntakeQuestions", schema: "dbo");
+
+        migrationBuilder.DropIndex(name: "IX_ServiceRequests_PublicStatusToken", table: "ServiceRequests", schema: "dbo");
+        migrationBuilder.DropIndex(name: "IX_ServiceRequests_QuoteApprovalToken", table: "ServiceRequests", schema: "dbo");
+
+        migrationBuilder.DropColumn("EstimatedDurationMinutes", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("PublicStatusToken", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("QuoteApprovalToken", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("ScheduleNotes", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("ScheduledEndUtc", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("ScheduledStartUtc", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("ServiceLocationType", "ServiceRequests", "dbo");
+        migrationBuilder.DropColumn("CustomerApprovalMessage", "Quotes", "dbo");
+        migrationBuilder.DropColumn("CustomerApprovalRespondedUtc", "Quotes", "dbo");
+    }
 }
