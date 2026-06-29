@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Second Shift Auto Care icon">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="68%">
+      <stop offset="0" stop-color="#1B2028"/>
+      <stop offset="1" stop-color="#0F1217"/>
+    </radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F2F4F5"/>
+      <stop offset="0.48" stop-color="#C8CDD2"/>
+      <stop offset="1" stop-color="#7F848B"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5A7FA8"/>
+      <stop offset="1" stop-color="#44688E"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#000" flood-opacity=".6"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="92" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <path d="M84 231a178 178 0 0 1 344 0M84 281a178 178 0 0 0 121 146m102 0a178 178 0 0 0 121-146" fill="none" stroke="url(#blue)" stroke-width="18"/>
+    <path d="M81 239h47M81 273h47M384 239h47M384 273h47" stroke="#5A7FA8" stroke-width="15"/>
+    <path d="M327 111A156 156 0 1 0 390 360a132 132 0 1 1-63-249Z" fill="url(#steel)" stroke="#E7EAEC" stroke-width="3"/>
+    <g transform="translate(289 168) rotate(13)">
+      <path d="M-24 70h48v178h-48z" fill="url(#steel)" stroke="#E7EAEC" stroke-width="3"/>
+      <path d="M-10 104h20v117h-20z" fill="#34383D" opacity=".72"/>
+      <circle r="58" fill="url(#steel)" stroke="#E7EAEC" stroke-width="3"/>
+      <circle r="28" fill="#0F1217"/>
+      <path d="M-16-60h92v51L30 16-17-11z" fill="#0F1217"/>
+    </g>
+    <g transform="translate(256 430)">
+      <path d="M0-44 12-26l22-8 2 22 22 2-8 22 18 12-18 12 8 22-22 2-2 22-22-8L0 92-12 74l-22 8-2-22-22-2 8-22-18-12 18-12-8-22 22-2 2-22 22 8Z" transform="scale(.65)" fill="url(#steel)" stroke="#E7EAEC" stroke-width="4"/>
+      <circle r="17" fill="#0F1217"/>
+    </g>
+  </g>
+</svg>

@@ -8,10 +8,21 @@
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="manifest.webmanifest" rel="manifest" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="icon" type="image/svg+xml" href="icon.svg" />
+    <link rel="apple-touch-icon" href="icon.svg" />
 </head>
 <body>
-    <div id="app">Loading...</div>
+    <div id="app">
+        <main class="loading-screen" aria-label="Loading Second Shift Auto Care">
+            <div class="loading-mark" aria-hidden="true">
+                <div class="loading-mark__ring"></div>
+                <div class="loading-mark__crescent"></div>
+                <div class="loading-mark__wrench"></div>
+                <div class="loading-mark__gear"></div>
+            </div>
+            <p class="loading-screen__text">Second Shift Auto Care</p>
+        </main>
+    </div>
     <div id="blazor-error-ui">An unhandled error has occurred. <a href="" class="reload">Reload</a></div>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
