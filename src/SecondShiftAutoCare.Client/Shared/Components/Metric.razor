@@ -1,4 +1,4 @@
 <MudItem xs="6" md="4" lg="2">
-    <MudCard Elevation="0" Class="metric-card metric-card--@Accent"><MudCardContent><MudStack Row="true" AlignItems="AlignItems.Center"><MudIcon Icon="@Icon" /><MudSpacer /><MudText Typo="Typo.h4">@Value</MudText></MudStack><MudText Typo="Typo.body2" Color="Color.Secondary">@Title</MudText></MudCardContent></MudCard>
+    <MudCard Elevation="0" Class="@($"metric-card metric-card--{Accent}")"><MudCardContent><MudStack Row="true" AlignItems="AlignItems.Center"><MudIcon Icon="@Icon" /><MudSpacer /><MudText Typo="Typo.h4">@Value</MudText></MudStack><MudText Typo="Typo.body2" Color="Color.Secondary">@Title</MudText></MudCardContent></MudCard>
 </MudItem>
 @code { [Parameter] public string Title { get; set; } = "Metric"; [Parameter] public string Value { get; set; } = "0"; [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Info; [Parameter] public string Accent { get; set; } = "teal"; }
