@@ -20,6 +20,7 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
     public DbSet<JobChecklistItem> JobChecklistItems => Set<JobChecklistItem>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<JobRiskAssessment> JobRiskAssessments => Set<JobRiskAssessment>();
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,16 @@ public sealed class ServiceRequestDbContext(DbContextOptions<ServiceRequestDbCon
         modelBuilder.Entity<JobChecklistItem>(e => { e.ToTable("JobChecklistItems", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.Text).HasMaxLength(300).IsRequired(); e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.HasOne(x => x.ServiceRequest).WithMany(x => x.ChecklistItems).HasForeignKey(x => x.ServiceRequestId).OnDelete(DeleteBehavior.Cascade); e.HasIndex(x => x.ServiceRequestId); });
         modelBuilder.Entity<Payment>(e => { e.ToTable("Payments", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.PaymentStatus).HasMaxLength(50).IsRequired(); e.Property(x => x.PaymentMethod).HasMaxLength(50); e.Property(x => x.AmountDue).HasPrecision(8,2); e.Property(x => x.AmountPaid).HasPrecision(8,2); e.Property(x => x.Notes).HasMaxLength(1000); e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.HasOne(x => x.ServiceRequest).WithOne(x => x.Payment).HasForeignKey<Payment>(x => x.ServiceRequestId).OnDelete(DeleteBehavior.Cascade); e.HasIndex(x => x.ServiceRequestId).IsUnique(); });
         modelBuilder.Entity<JobRiskAssessment>(e => { e.ToTable("JobRiskAssessments", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever(); e.Property(x => x.EstimatedHours).HasPrecision(6,2); e.Property(x => x.Recommendation).HasMaxLength(50).IsRequired(); e.Property(x => x.Notes).HasMaxLength(1000); e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.Property(x => x.UpdatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired(); e.HasOne(x => x.ServiceRequest).WithOne(x => x.RiskAssessment).HasForeignKey<JobRiskAssessment>(x => x.ServiceRequestId).OnDelete(DeleteBehavior.Cascade); e.HasIndex(x => x.ServiceRequestId).IsUnique(); });
+
+        modelBuilder.Entity<NotificationLog>(e =>
+        {
+            e.ToTable("NotificationLogs", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.NotificationType).HasMaxLength(80).IsRequired(); e.Property(x => x.Channel).HasMaxLength(50).IsRequired(); e.Property(x => x.Recipient).HasMaxLength(320).IsRequired();
+            e.Property(x => x.Subject).HasMaxLength(500); e.Property(x => x.BodyPreview).HasMaxLength(1000); e.Property(x => x.Provider).HasMaxLength(80).IsRequired(); e.Property(x => x.Status).HasMaxLength(50).IsRequired(); e.Property(x => x.ErrorMessage).HasMaxLength(1000);
+            e.Property(x => x.CreatedUtc).HasDefaultValueSql("SYSUTCDATETIME()").IsRequired();
+            e.HasOne(x => x.ServiceRequest).WithMany(x => x.NotificationLogs).HasForeignKey(x => x.ServiceRequestId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(x => x.ServiceRequestId); e.HasIndex(x => x.NotificationType); e.HasIndex(x => x.Status); e.HasIndex(x => x.CreatedUtc);
+        });
         modelBuilder.Entity<ServiceCatalogItem>(e => { e.ToTable("ServiceCatalogItems", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(150).IsRequired(); e.Property(x => x.Description).HasMaxLength(1000); e.HasIndex(x => x.Name).IsUnique(); });
         modelBuilder.Entity<VehicleMake>(e => { e.ToTable("VehicleMakes", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(75).IsRequired(); e.HasIndex(x => x.Name).IsUnique(); });
         modelBuilder.Entity<VehicleModel>(e => { e.ToTable("VehicleModels", "dbo"); e.HasKey(x => x.Id); e.Property(x => x.Name).HasMaxLength(75).IsRequired(); e.HasOne(x => x.VehicleMake).WithMany(x => x.Models).HasForeignKey(x => x.VehicleMakeId).OnDelete(DeleteBehavior.Cascade); e.HasIndex(x => x.VehicleMakeId); e.HasIndex(x => x.Name); });

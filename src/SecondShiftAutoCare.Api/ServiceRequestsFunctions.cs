@@ -6,18 +6,21 @@ using System.Text.Json.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using SecondShiftAutoCare.Api.Notifications;
 using SecondShiftAutoCare.Shared.Models;
 
 namespace SecondShiftAutoCare.Api;
 
-public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository, ILogger<ServiceRequestsFunctions> logger)
+public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository, IAdminNotificationService adminNotificationService, IEmailNotificationSender emailNotificationSender, IConfiguration configuration, ILogger<ServiceRequestsFunctions> logger)
 {
     private const string AdminRole = "admin";
 
     [Function(nameof(CreateServiceRequest))]
     public async Task<HttpResponseData> CreateServiceRequest(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests/")] HttpRequestData request)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "service-requests/")] HttpRequestData request,
+        CancellationToken cancellationToken)
     {
         logger.LogInformation("POST service-requests route hit.");
 
@@ -59,6 +62,15 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
         return await ExecuteDatabaseActionAsync(request, async () =>
         {
             var created = await repository.CreateAsync(serviceRequest);
+            try
+            {
+                await adminNotificationService.NotifyNewServiceRequestAsync(created.Id!.Value, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Admin notification failed for service request {ServiceRequestId}; customer submission will still succeed.", created.Id);
+            }
+
             var response = request.CreateResponse(HttpStatusCode.Created);
             response.Headers.Add("Location", $"/api/service-requests/{created.Id}");
             await response.WriteAsJsonAsync(created);
@@ -267,6 +279,36 @@ public sealed class ServiceRequestsFunctions(ServiceRequestRepository repository
     public async Task<HttpResponseData> UpdateRiskAssessment([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "manage/service-requests/{id:guid}/risk-assessment")] HttpRequestData request, Guid id)
     { var u=await RequireAdminAsync(request); if(u is not null) return u; var model=await request.ReadFromJsonAsync<JobRiskAssessmentDto>(); if(model is null) return await WriteErrorAsync(request,HttpStatusCode.BadRequest,"Request body is required."); return await ExecuteDatabaseActionAsync(request, async () => (await repository.UpdateRiskAsync(id, model)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Service request was not found.")); }
 
+
+    [Function(nameof(SendTestNotification))]
+    public async Task<HttpResponseData> SendTestNotification(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "manage/notifications/test")] HttpRequestData request,
+        CancellationToken cancellationToken)
+    {
+        var unauthorizedResponse = await RequireAdminAsync(request);
+        if (unauthorizedResponse is not null)
+        {
+            return unauthorizedResponse;
+        }
+
+        var payload = await request.ReadFromJsonAsync<TestNotificationRequest>(cancellationToken: cancellationToken) ?? new TestNotificationRequest();
+        var recipient = string.IsNullOrWhiteSpace(payload.ToEmail) ? configuration["AdminNotificationEmail"] : payload.ToEmail;
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            return await WriteErrorAsync(request, HttpStatusCode.BadRequest, "AdminNotificationEmail is not configured and ToEmail was not provided.");
+        }
+
+        var result = await emailNotificationSender.SendAsync(new EmailNotificationMessage
+        {
+            To = recipient,
+            Subject = "2nd Shift Auto Care test notification",
+            HtmlBody = "<p>This is a test notification from 2nd Shift Auto Care.</p>",
+            TextBody = "This is a test notification from 2nd Shift Auto Care."
+        }, cancellationToken);
+
+        return await WriteJsonAsync(request, result.Success ? HttpStatusCode.OK : HttpStatusCode.BadGateway, result);
+    }
+
     [Function(nameof(GetCustomerDetail))]
     public async Task<HttpResponseData> GetCustomerDetail([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "manage/customers/{id:guid}")] HttpRequestData request, Guid id)
     { var u=await RequireAdminAsync(request); if(u is not null) return u; return await ExecuteDatabaseActionAsync(request, async () => (await repository.GetCustomerAsync(id)) is { } dto ? await WriteJsonAsync(request, HttpStatusCode.OK, dto) : await WriteErrorAsync(request, HttpStatusCode.NotFound, "Customer was not found.")); }
@@ -369,4 +411,9 @@ public sealed class StaticWebAppsClientPrincipal
 {
     [JsonPropertyName("userRoles")]
     public string[] UserRoles { get; set; } = [];
+}
+
+public sealed class TestNotificationRequest
+{
+    public string? ToEmail { get; set; }
 }

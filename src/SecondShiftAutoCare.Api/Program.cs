@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SecondShiftAutoCare.Api;
 using SecondShiftAutoCare.Api.Data;
+using SecondShiftAutoCare.Api.Notifications;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -27,6 +28,16 @@ var host = new HostBuilder()
                     errorNumbersToAdd: null));
         });
         services.AddScoped<ServiceRequestRepository>();
+        services.AddScoped<IAdminNotificationService, AdminNotificationService>();
+        if (string.IsNullOrWhiteSpace(context.Configuration["ResendApiKey"]))
+        {
+            services.AddScoped<IEmailNotificationSender, DisabledEmailNotificationSender>();
+        }
+        else
+        {
+            services.AddSingleton<HttpClient>();
+            services.AddScoped<IEmailNotificationSender, ResendEmailNotificationSender>();
+        }
     })
     .Build();
 

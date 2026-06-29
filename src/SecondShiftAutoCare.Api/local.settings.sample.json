@@ -3,7 +3,13 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    // "SqlConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SecondShiftAutoCare;Trusted_Connection=True;TrustServerCertificate=True;",
-    "SqlConnectionString": "Server=tcp:azure-sql-server-2.database.windows.net,1433;Initial Catalog=azure-sql;Persist Security Info=False;User ID=ek-sal;Password=Sinfomtm2%;MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;"
+    "SqlConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SecondShiftAutoCare;Trusted_Connection=True;TrustServerCertificate=True;",
+    "ResendApiKey": "",
+    "NotificationFromEmail": "",
+    "NotificationFromName": "2nd Shift Auto Care",
+    "AdminNotificationEmail": "",
+    "AdminNotificationSmsEmail": "",
+    "PublicAppBaseUrl": "https://auto.logankragt.com",
+    "EnableAdminNewRequestNotifications": "false"
   }
 }
