@@ -36,4 +36,5 @@ public sealed class ServiceRequest
     public ICollection<JobChecklistItem> ChecklistItems { get; set; } = [];
     public Payment? Payment { get; set; }
     public JobRiskAssessment? RiskAssessment { get; set; }
+    public ICollection<NotificationLog> NotificationLogs { get; set; } = [];
 }
