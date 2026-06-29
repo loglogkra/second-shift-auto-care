@@ -1,3 +1,4 @@
+@page "/admin"
 @page "/admin/requests"
 @page "/admin/dashboard"
 @inject ServiceRequestClient ServiceRequests
@@ -5,207 +6,68 @@
 @inject NavigationManager Navigation
 <PageTitle>Admin Dashboard</PageTitle>
 
-<MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap" Spacing="2">
-    <div>
-        <MudText Typo="Typo.overline" Color="Color.Primary">Admin job board</MudText>
-        <MudText Typo="Typo.h4">Admin Dashboard</MudText>
-    </div>
-    <MudSpacer />
-    @if (_authState?.IsAuthenticated == true)
-    {
-        <MudText Typo="Typo.body2" Class="mr-2">Signed in as @_authState.UserName</MudText>
-    }
-    <MudButton OnClick="Logout" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
-</MudStack>
-
 @if (_isLoading)
 {
-    <MudPaper Class="pa-6 text-center" Elevation="0"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /><MudText Class="mt-3">Loading requests...</MudText></MudPaper>
+    <PageLoading Text="Loading your job board..." SubText="Checking admin access and recent requests." Skeleton="Dashboard" ShowTimeout="_showTimeout" OnRetry="LoadAsync" />
 }
 else if (_authState?.IsAuthenticated != true)
 {
-    <MudCard Elevation="0" Class="pa-4">
-        <MudCardContent>
-            <MudText Typo="Typo.h5" GutterBottom="true">Admin sign in required</MudText>
-            <MudText Class="mb-4">Please sign in with Microsoft before loading the admin request board.</MudText>
-            <MudButton OnClick="Login" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Login">Sign in with Microsoft</MudButton>
-        </MudCardContent>
-    </MudCard>
+    <MudPaper Elevation="0" Class="auth-card pa-6"><MudStack Spacing="2"><MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Color="Color.Primary" Size="Size.Large" /><MudText Typo="Typo.h4">Admin access is required.</MudText><MudText Color="Color.Secondary">Sign in with your Microsoft account to manage requests.</MudText><MudButton OnClick="Login" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Login">Sign in with Microsoft</MudButton></MudStack></MudPaper>
 }
 else if (!_authState.IsAdmin)
 {
-    <MudCard Elevation="0" Class="pa-4">
-        <MudCardContent>
-            <MudText Typo="Typo.h5" GutterBottom="true">Access denied</MudText>
-            <MudText Class="mb-4">You are signed in but do not have admin access.</MudText>
-            <MudButton OnClick="Logout" Color="Color.Secondary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Logout">Sign out</MudButton>
-        </MudCardContent>
-    </MudCard>
+    <MudPaper Elevation="0" Class="auth-card pa-6"><MudStack Spacing="2"><MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Warning" Size="Size.Large" /><MudText Typo="Typo.h4">Access denied</MudText><MudText Color="Color.Secondary">You’re signed in, but this account does not have admin access.</MudText></MudStack></MudPaper>
 }
 else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
-    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+    <ErrorState Title="Couldn’t load the job board" Message="@_errorMessage" OnRetry="LoadAsync" />
+}
+else if (IsDashboardRoute)
+{
+    <MudStack Spacing="4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap" Spacing="2"><div><MudText Typo="Typo.overline" Color="Color.Primary">Today’s after-hours job board</MudText><MudText Typo="Typo.h3">Admin Dashboard</MudText></div><MudSpacer /><MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add">Request Service</MudButton><MudButton OnClick="LoadAsync" Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton></MudStack>
+        @if (Requests.Count == 0) { <EmptyState Title="No requests yet." Message="New service requests will appear here once customers submit the public request form." ButtonText="Open public request form" Href="/request-service" /> }
+        <MudGrid Spacing="3">
+            <Metric Title="New requests" Value="@Count(ServiceRequestStatuses.New).ToString()" Icon="@Icons.Material.Filled.FiberNew" Accent="teal" />
+            <Metric Title="Needs quote" Value="@NeedsQuote.Count().ToString()" Icon="@Icons.Material.Filled.RequestQuote" Accent="amber" />
+            <Metric Title="Scheduled" Value="@Count(ServiceRequestStatuses.Scheduled).ToString()" Icon="@Icons.Material.Filled.EventAvailable" Accent="green" />
+            <Metric Title="Waiting on customer" Value="@WaitingCustomer.Count().ToString()" Icon="@Icons.Material.Filled.MarkEmailUnread" Accent="amber" />
+            <Metric Title="Completed this month" Value="@CompletedThisMonth.Count().ToString()" Icon="@Icons.Material.Filled.TaskAlt" Accent="green" />
+            <Metric Title="Estimated open revenue" Value="@OpenRevenue.ToString("C0")" Icon="@Icons.Material.Filled.AttachMoney" Accent="navy" />
+        </MudGrid>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="5"><MudPaper Elevation="0" Class="dashboard-panel pa-4"><MudText Typo="Typo.h5" GutterBottom="true">Needs attention</MudText>@foreach (var r in NeedsAttention.Take(6)) { <RequestMini Request="r" /> } @if (!NeedsAttention.Any()) { <MudText Color="Color.Secondary">Nothing urgent right now.</MudText> }</MudPaper></MudItem>
+            <MudItem xs="12" md="7"><MudPaper Elevation="0" Class="dashboard-panel pa-4"><MudText Typo="Typo.h5" GutterBottom="true">Upcoming jobs</MudText>@foreach (var r in Upcoming.Take(6)) { <RequestMini Request="r" ShowSchedule="true" /> } @if (!Upcoming.Any()) { <MudText Color="Color.Secondary">No scheduled jobs in the next 7 days.</MudText> }</MudPaper></MudItem>
+        </MudGrid>
+        <MudPaper Elevation="0" Class="dashboard-panel pa-4"><MudText Typo="Typo.h5" GutterBottom="true">Recent requests</MudText><MudTable Items="Requests.Take(8)" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm"><HeaderContent><MudTh>Customer</MudTh><MudTh>Vehicle</MudTh><MudTh>Service</MudTh><MudTh>Status</MudTh><MudTh>Created</MudTh><MudTh></MudTh></HeaderContent><RowTemplate><MudTd DataLabel="Customer">@context.CustomerName</MudTd><MudTd DataLabel="Vehicle">@Vehicle(context)</MudTd><MudTd DataLabel="Service">@context.ServiceType</MudTd><MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">@context.Status</MudChip></MudTd><MudTd DataLabel="Created">@Date(context.CreatedAtUtc)</MudTd><MudTd><MudButton Href="@($"/admin/requests/{context.Id}")" Size="Size.Small" Variant="Variant.Outlined">View</MudButton></MudTd></RowTemplate></MudTable></MudPaper>
+    </MudStack>
 }
 else
 {
-    <MudGrid Spacing="3" Class="mb-4">
-        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@FilteredRequests.Count()</MudText><MudText Typo="Typo.body2">Showing</MudText></MudCardContent></MudCard></MudItem>
-        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.New)</MudText><MudText Typo="Typo.body2">New</MudText></MudCardContent></MudCard></MudItem>
-        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.Scheduled)</MudText><MudText Typo="Typo.body2">Scheduled</MudText></MudCardContent></MudCard></MudItem>
-        <MudItem xs="6" md="3"><MudCard Elevation="0" Class="board-stat"><MudCardContent><MudText Typo="Typo.h4">@Requests.Count(r => r.Status == ServiceRequestStatuses.PartsOrdered)</MudText><MudText Typo="Typo.body2">Parts Ordered</MudText></MudCardContent></MudCard></MudItem>
-    </MudGrid>
-
-    <MudPaper Class="pa-4 mb-4" Elevation="0">
-        <MudGrid Spacing="2">
-            <MudItem xs="12" md="4"><MudTextField @bind-Value="_searchText" Label="Search customer, phone, vehicle, service" Variant="Variant.Outlined" Immediate="true" /></MudItem>
-            <MudItem xs="12" md="3"><MudSelect @bind-Value="_statusFilter" Label="Filter by status" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var status in ServiceRequestStatuses.All) { <MudSelectItem Value="@status">@status</MudSelectItem> }</MudSelect></MudItem>
-            <MudItem xs="12" md="3"><MudSelect @bind-Value="_serviceFilter" Label="Service" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var service in ServiceTypeOptions.All) { <MudSelectItem Value="@service">@service</MudSelectItem> }</MudSelect></MudItem>
-            <MudItem xs="12" md="3"><MudSelect @bind-Value="_paymentFilter" Label="Payment" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem>@foreach (var status in PaymentStatuses.All) { <MudSelectItem Value="@status">@status</MudSelectItem> }</MudSelect></MudItem>
-            <MudItem xs="12" md="3"><MudSelect @bind-Value="_quickFilter" Label="Scheduled" Variant="Variant.Outlined"><MudSelectItem Value="@("All")">All</MudSelectItem><MudSelectItem Value="@("Unscheduled")">Unscheduled</MudSelectItem><MudSelectItem Value="@("Today")">Today</MudSelectItem><MudSelectItem Value="@("Weekend")">This weekend</MudSelectItem><MudSelectItem Value="@("Next7Days")">Next 7 days</MudSelectItem><MudSelectItem Value="@("NeedsQuote")">Needs quote</MudSelectItem><MudSelectItem Value="@("WaitingCustomer")">Waiting on customer</MudSelectItem><MudSelectItem Value="@("WaitingParts")">Waiting on parts</MudSelectItem><MudSelectItem Value="@("CompletedMonth")">Completed this month</MudSelectItem></MudSelect></MudItem>
-            <MudItem xs="12" md="2"><MudSwitch @bind-Value="_sortNewestFirst" Color="Color.Primary" Label="Newest first" /></MudItem>
-        </MudGrid>
-    </MudPaper>
-
-    <MudTable Items="FilteredRequests" Hover="true" Breakpoint="Breakpoint.Sm" Class="job-board" Elevation="0">
-        <HeaderContent>
-            <MudTh>Status</MudTh><MudTh>Customer</MudTh><MudTh>Phone</MudTh><MudTh>Email</MudTh><MudTh>Vehicle</MudTh><MudTh>Requested Service</MudTh><MudTh>Preferred Time</MudTh><MudTh>Created</MudTh><MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Status">
-                <MudSelect T="string" Value="@context.Status" ValueChanged="@(status => UpdateStatusAsync(context, status))" Dense="true" Variant="Variant.Outlined">
-                    @foreach (var status in DashboardStatuses)
-                    {
-                        <MudSelectItem Value="@status">@status</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudTd>
-            <MudTd DataLabel="Customer"><MudText Typo="Typo.subtitle2">@context.CustomerName</MudText></MudTd>
-            <MudTd DataLabel="Phone">@context.Phone</MudTd>
-            <MudTd DataLabel="Email">@context.Email</MudTd>
-            <MudTd DataLabel="Vehicle">@context.VehicleYear @context.VehicleMake @context.VehicleModel</MudTd>
-            <MudTd DataLabel="Requested Service">@context.ServiceType</MudTd>
-            <MudTd DataLabel="Preferred Time">@context.PreferredAvailability</MudTd>
-            <MudTd DataLabel="Created">@context.CreatedAtUtc?.ToLocalTime().ToString("g")</MudTd>
-            <MudTd><MudButton Href="@($"/admin/requests/{context.Id}")" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Open</MudButton></MudTd>
-        </RowTemplate>
-        <NoRecordsContent>
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="ma-4">No service requests yet.</MudAlert>
-        </NoRecordsContent>
-    </MudTable>
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap"><div><MudText Typo="Typo.overline" Color="Color.Primary">Requests board</MudText><MudText Typo="Typo.h3">Service Requests</MudText></div><MudSpacer /><MudButton OnClick="LoadAsync" Color="Color.Primary" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton></MudStack>
+        <MudPaper Class="filter-bar pa-3" Elevation="0"><MudTextField @bind-Value="_searchText" Placeholder="Search customer, phone, vehicle, service" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" Variant="Variant.Outlined" Margin="Margin.Dense" /><MudStack Row="true" Class="flex-wrap mt-2" Spacing="1"><MudChip T="string" OnClick="@(() => _statusFilter = "All")" Color="@(_statusFilter == "All" ? Color.Primary : Color.Default)">All</MudChip>@foreach (var s in ServiceRequestStatuses.All) { var status=s; <MudChip T="string" OnClick="@(() => _statusFilter = status)" Color="@(_statusFilter == status ? GetStatusColor(status) : Color.Default)">@status</MudChip> }</MudStack></MudPaper>
+        @if (!FilteredRequests.Any()) { <EmptyState Title="No matching requests" Message="Try clearing search or status filters." /> }
+        <MudGrid Spacing="3">@foreach (var r in FilteredRequests) { <MudItem xs="12" md="6" lg="4"><MudCard Elevation="0" Class="request-card"><MudCardContent><MudStack Spacing="2"><MudStack Row="true"><MudText Typo="Typo.h6">@r.CustomerName</MudText><MudSpacer /><MudChip T="string" Size="Size.Small" Color="@GetStatusColor(r.Status)">@r.Status</MudChip></MudStack><MudText Typo="Typo.body2" Color="Color.Secondary">@r.Phone</MudText><MudText><b>@Vehicle(r)</b></MudText><MudText>@r.ServiceType</MudText><MudText Typo="Typo.caption">Created @Date(r.CreatedAtUtc)</MudText>@if (r.ScheduledStartUtc is not null) { <MudText Typo="Typo.caption">Scheduled @Date(r.ScheduledStartUtc)</MudText> }@if (r.TotalEstimate is not null) { <MudText Typo="Typo.caption">Estimate @r.TotalEstimate.Value.ToString("C")</MudText> }<MudButton Href="@($"/admin/requests/{r.Id}")" Variant="Variant.Filled" Color="Color.Primary">View details</MudButton></MudStack></MudCardContent></MudCard></MudItem> }</MudGrid>
+    </MudStack>
 }
 
 @code {
     private List<ServiceRequestDto> Requests { get; set; } = [];
-    private bool _isLoading = true;
-    private string? _errorMessage;
-    private AuthState? _authState;
-    private string _searchText = string.Empty;
-    private string _statusFilter = "All";
-    private string _quickFilter = "All";
-    private string _serviceFilter = "All";
-    private string _paymentFilter = "All";
-    private bool _sortNewestFirst = true;
-
-    private static readonly string[] DashboardStatuses = [ServiceRequestStatuses.New, ServiceRequestStatuses.Contacted, ServiceRequestStatuses.Scheduled, ServiceRequestStatuses.Completed, ServiceRequestStatuses.Declined];
-
-    private IEnumerable<ServiceRequestDto> FilteredRequests => ApplyFilters();
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            Console.WriteLine("Checking auth state");
-            _authState = await Auth.GetAuthStateAsync();
-            if (!_authState.IsAuthenticated)
-            {
-                Console.WriteLine("User is anonymous, not calling admin API");
-                return;
-            }
-
-            if (!_authState.IsAdmin)
-            {
-                Console.WriteLine("User is authenticated but not admin, not calling admin API");
-                return;
-            }
-
-            Console.WriteLine("User is admin, loading admin requests");
-            var requests = await ServiceRequests.GetAllAsync();
-            Requests = requests.OrderByDescending(request => request.CreatedAtUtc).ToList();
-        }
-        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
-        {
-            _errorMessage = ex.Message;
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
-
-    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin/requests", forceLoad: true);
-
-    private void Logout() => Navigation.NavigateTo("/.auth/logout?post_logout_redirect_uri=/", forceLoad: true);
-
-    private IEnumerable<ServiceRequestDto> ApplyFilters()
-    {
-        var query = Requests.AsEnumerable();
-        if (_statusFilter != "All") query = query.Where(r => r.Status == _statusFilter);
-        if (_serviceFilter != "All") query = query.Where(r => r.ServiceType.Contains(_serviceFilter, StringComparison.OrdinalIgnoreCase));
-        if (_paymentFilter != "All") query = query.Where(r => r.PaymentStatus == _paymentFilter);
-        if (!string.IsNullOrWhiteSpace(_searchText))
-        {
-            query = query.Where(r => $"{r.CustomerName} {r.Phone} {r.VehicleYear} {r.VehicleMake} {r.VehicleModel} {r.ServiceType}".Contains(_searchText, StringComparison.OrdinalIgnoreCase));
-        }
-        query = _quickFilter switch
-        {
-            "NeedsQuote" => query.Where(r => r.Status == ServiceRequestStatuses.New || r.Status == ServiceRequestStatuses.NeedInfo),
-            "WaitingCustomer" => query.Where(r => r.Status == ServiceRequestStatuses.NeedInfo || r.Status == ServiceRequestStatuses.Quoted),
-            "WaitingParts" => query.Where(r => r.Status == ServiceRequestStatuses.PartsOrdered),
-            "CompletedMonth" => query.Where(r => (r.Status == ServiceRequestStatuses.Completed || r.Status == ServiceRequestStatuses.Paid) && r.CreatedAtUtc?.Month == DateTime.Now.Month && r.CreatedAtUtc?.Year == DateTime.Now.Year),
-            "Unscheduled" => query.Where(r => r.ScheduledStartUtc is null),
-            "Today" => query.Where(r => r.ScheduledStartUtc?.ToLocalTime().Date == DateTime.Today),
-            "Weekend" => query.Where(r => r.ScheduledStartUtc is not null && (r.ScheduledStartUtc.Value.ToLocalTime().DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)),
-            "Next7Days" => query.Where(r => r.ScheduledStartUtc is not null && r.ScheduledStartUtc.Value.ToLocalTime() <= DateTime.Now.AddDays(7)),
-            _ => query
-        };
-        return _sortNewestFirst ? query.OrderByDescending(r => r.CreatedAtUtc) : query.OrderBy(r => r.CreatedAtUtc);
-    }
-
-    private async Task UpdateStatusAsync(ServiceRequestDto request, string status)
-    {
-        if (request.Id is null || request.Status == status)
-        {
-            return;
-        }
-
-        try
-        {
-            var updated = await ServiceRequests.UpdateStatusAsync(request.Id.Value, new ServiceRequestStatusUpdateModel { Status = status });
-            var index = Requests.FindIndex(r => r.Id == request.Id);
-            if (index >= 0)
-            {
-                Requests[index] = updated;
-            }
-        }
-        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException)
-        {
-            _errorMessage = ex.Message;
-        }
-    }
-
-    private static Color GetStatusColor(string status) => status switch
-    {
-        ServiceRequestStatuses.New => Color.Info,
-        ServiceRequestStatuses.Contacted => Color.Primary,
-        ServiceRequestStatuses.NeedInfo => Color.Warning,
-        ServiceRequestStatuses.Quoted => Color.Primary,
-        ServiceRequestStatuses.Scheduled => Color.Secondary,
-        ServiceRequestStatuses.PartsOrdered => Color.Tertiary,
-        ServiceRequestStatuses.InProgress => Color.Warning,
-        ServiceRequestStatuses.Completed => Color.Success,
-        ServiceRequestStatuses.Paid => Color.Success,
-        ServiceRequestStatuses.Declined => Color.Error,
-        ServiceRequestStatuses.Canceled => Color.Error,
-        _ => Color.Default
-    };
+    private bool _isLoading = true; private bool _showTimeout; private string? _errorMessage; private AuthState? _authState; private string _searchText = string.Empty; private string _statusFilter = "All";
+    private bool IsDashboardRoute => !Navigation.Uri.Contains("/admin/requests", StringComparison.OrdinalIgnoreCase);
+    private IEnumerable<ServiceRequestDto> FilteredRequests => Requests.Where(r => (_statusFilter == "All" || r.Status == _statusFilter) && (string.IsNullOrWhiteSpace(_searchText) || $"{r.CustomerName} {r.Phone} {Vehicle(r)} {r.ServiceType}".Contains(_searchText, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<ServiceRequestDto> NeedsQuote => Requests.Where(r => (r.Status is ServiceRequestStatuses.New or ServiceRequestStatuses.NeedInfo) || r.TotalEstimate is null);
+    private IEnumerable<ServiceRequestDto> WaitingCustomer => Requests.Where(r => r.Status is ServiceRequestStatuses.NeedInfo or ServiceRequestStatuses.Quoted);
+    private IEnumerable<ServiceRequestDto> CompletedThisMonth => Requests.Where(r => (r.Status is ServiceRequestStatuses.Completed or ServiceRequestStatuses.Paid) && r.CreatedAtUtc?.Month == DateTime.Now.Month && r.CreatedAtUtc?.Year == DateTime.Now.Year);
+    private IEnumerable<ServiceRequestDto> NeedsAttention => Requests.Where(r => (r.Status is ServiceRequestStatuses.New or ServiceRequestStatuses.NeedInfo) || (r.Status == ServiceRequestStatuses.Scheduled && r.ScheduledStartUtc is null));
+    private IEnumerable<ServiceRequestDto> Upcoming => Requests.Where(r => r.ScheduledStartUtc is not null && r.ScheduledStartUtc.Value.ToLocalTime() <= DateTime.Now.AddDays(7)).OrderBy(r => r.ScheduledStartUtc);
+    private decimal OpenRevenue => Requests.Where(r => r.Status is not (ServiceRequestStatuses.Completed or ServiceRequestStatuses.Paid or ServiceRequestStatuses.Canceled or ServiceRequestStatuses.Declined)).Sum(r => r.TotalEstimate ?? r.EstimateHigh ?? r.EstimateLow ?? 0m);
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private async Task LoadAsync() { _isLoading = true; _showTimeout = false; _errorMessage = null; using var cts = new CancellationTokenSource(); var timer = Task.Delay(TimeSpan.FromSeconds(10), cts.Token).ContinueWith(_ => { _showTimeout = true; InvokeAsync(StateHasChanged); }); try { _authState = await Auth.GetAuthStateAsync(); if (_authState is not { IsAuthenticated: true, IsAdmin: true }) return; Requests = (await ServiceRequests.GetAllAsync()).OrderByDescending(r => r.CreatedAtUtc).ToList(); } catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or JsonException) { _errorMessage = ex.Message; Console.WriteLine($"Admin board load failed: {ex.Message}"); } finally { cts.Cancel(); _isLoading = false; } }
+    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin", forceLoad: true);
+    private int Count(string status) => Requests.Count(r => r.Status == status);
+    private static string Vehicle(ServiceRequestDto r) => $"{r.VehicleYear} {r.VehicleMake} {r.VehicleModel}".Trim();
+    private static string Date(DateTime? value) => value?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "—";
+    private static Color GetStatusColor(string status) => status switch { ServiceRequestStatuses.New => Color.Info, ServiceRequestStatuses.NeedInfo => Color.Warning, ServiceRequestStatuses.Quoted => Color.Primary, ServiceRequestStatuses.Scheduled => Color.Success, ServiceRequestStatuses.PartsOrdered => Color.Warning, ServiceRequestStatuses.InProgress => Color.Info, ServiceRequestStatuses.Completed or ServiceRequestStatuses.Paid => Color.Success, ServiceRequestStatuses.Declined or ServiceRequestStatuses.Canceled => Color.Error, _ => Color.Default };
 }

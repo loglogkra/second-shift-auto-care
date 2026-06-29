@@ -1,15 +1,15 @@
-<MudNavMenu Class="px-2 nav-menu" Bordered="false">
-    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="/request-service" Icon="@Icons.Material.Filled.Handyman">Request Service</MudNavLink>
+<MudNavMenu Class="px-3 nav-menu" Bordered="false">
+    <MudText Typo="Typo.overline" Class="px-4 nav-section">Public</MudText>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" OnClick="OnNavigate">Home</MudNavLink>
+    <MudNavLink Href="/request-service" Icon="@Icons.Material.Filled.Handyman" OnClick="OnNavigate">Request Service</MudNavLink>
     @if (IsAdmin)
     {
         <MudDivider Class="my-3" />
         <MudText Typo="Typo.overline" Class="px-4 nav-section">Admin</MudText>
-        <MudNavLink Href="/admin/requests" Icon="@Icons.Material.Filled.Speed">Requests Board</MudNavLink>
+        <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" OnClick="OnNavigate">Dashboard</MudNavLink>
+        <MudNavLink Href="/admin/requests" Icon="@Icons.Material.Filled.ViewKanban" OnClick="OnNavigate">Requests Board</MudNavLink>
+        <MudNavLink Href="/admin/customers" Icon="@Icons.Material.Filled.Groups" OnClick="OnNavigate">Customers</MudNavLink>
+        <MudNavLink Href="/admin/vehicles" Icon="@Icons.Material.Filled.DirectionsCar" OnClick="OnNavigate">Vehicles</MudNavLink>
     }
 </MudNavMenu>
-
-@code {
-    [Parameter]
-    public bool IsAdmin { get; set; }
-}
+@code { [Parameter] public bool IsAdmin { get; set; } [Parameter] public EventCallback OnNavigate { get; set; } }

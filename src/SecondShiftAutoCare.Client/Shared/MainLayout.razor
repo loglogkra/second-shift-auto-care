@@ -8,13 +8,13 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="0" Color="Color.Primary" Dense="false" Class="app-bar">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" Class="me-2" />
+    <MudAppBar Elevation="0" Fixed="true" Class="app-bar">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" Class="me-2" aria-label="Open navigation" />
         <MudLink Href="/" Class="brand-link">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <BrandMark Class="brand-mark--appbar" />
-                <MudStack Spacing="0">
-                    <MudText Typo="Typo.subtitle1" Class="brand-name"><span>2ND</span> Shift</MudText>
+                <MudStack Spacing="0" Class="brand-copy">
+                    <MudText Typo="Typo.subtitle1" Class="brand-name"><span>2nd</span> Shift</MudText>
                     <MudText Typo="Typo.caption" Class="brand-subtitle">After-hours & weekend auto service</MudText>
                 </MudStack>
             </MudStack>
@@ -23,7 +23,7 @@
         <MudButton Href="/request-service" Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EditCalendar" Class="top-cta">Request Service</MudButton>
         @if (_authState?.IsAuthenticated == true)
         {
-            <MudText Typo="Typo.body2" Class="mx-3 d-none d-md-inline">@_authState.UserName</MudText>
+            <MudText Typo="Typo.body2" Class="mx-3 signed-in-email">@_authState.UserName</MudText>
             <MudButton OnClick="Logout" Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" StartIcon="@Icons.Material.Filled.Logout">Logout</MudButton>
         }
         else
@@ -37,19 +37,19 @@
             <MudStack Spacing="1">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                     <BrandMark Class="brand-mark--drawer" />
-                    <MudStack Spacing="0">
-                        <MudText Typo="Typo.subtitle1" Class="font-weight-700 drawer-brand"><span>2ND</span> Shift</MudText>
-                        <MudText Typo="Typo.caption">Auto Care</MudText>
-                    </MudStack>
+                    <MudStack Spacing="0"><MudText Typo="Typo.subtitle1" Class="drawer-brand"><span>2nd</span> Shift</MudText><MudText Typo="Typo.caption">Auto Care</MudText></MudStack>
                 </MudStack>
-                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Filled">After-hours service</MudChip>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">Zeeland / West Michigan</MudText>
             </MudStack>
         </MudDrawerHeader>
-        <NavMenu IsAdmin="@(_authState?.IsAdmin == true)" />
+        <NavMenu IsAdmin="@(_authState?.IsAdmin == true)" OnNavigate="CloseDrawerOnMobile" />
+        <MudSpacer />
+        <div class="drawer-footer"><MudText Typo="Typo.caption">Zeeland / West Michigan</MudText><MudText Typo="Typo.caption">Build: PWA</MudText></div>
     </MudDrawer>
 
     <MudMainContent Class="main-content">
-        <MudContainer MaxWidth="MaxWidth.Large" Class="py-5 py-md-8 px-4">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="content-container">
+            <div id="offline-banner" class="offline-banner" hidden><strong>You’re offline.</strong> Saved pages may still work, but service requests need a connection. <button onclick="location.reload()">Retry</button></div>
             @Body
         </MudContainer>
     </MudMainContent>
@@ -58,38 +58,16 @@
 @code {
     private bool _drawerOpen = true;
     private AuthState? _authState;
-
     private readonly MudTheme _theme = new()
     {
-        Palette = new Palette
-        {
-            Primary = "#44688E",
-            Secondary = "#C8CDD2",
-            Tertiary = "#5A7FA8",
-            Background = "#0F1217",
-            Surface = "#1B2028",
-            AppbarBackground = "#0F1217",
-            DrawerBackground = "#1B2028",
-            TextPrimary = "#C8CDD2",
-            TextSecondary = "#7F848B"
-        },
-        LayoutProperties = new LayoutProperties
-        {
-            DefaultBorderRadius = "14px"
-        }
+        PaletteLight = new PaletteLight { Primary="#0B1D3A", Secondary="#F5A623", Tertiary="#00B2C7", Background="#F7F4EE", Surface="#FFFFFF", AppbarBackground="#0B1D3A", DrawerBackground="#FFFFFF", TextPrimary="#2B2F36", TextSecondary="#7B8794", Info="#00B2C7", Warning="#F5A623" },
+        PaletteDark = new PaletteDark { Primary="#00B2C7", Secondary="#F5A623", Tertiary="#7B8794", Background="#171C24", Surface="#202733", AppbarBackground="#0B1D3A", DrawerBackground="#171C24" },
+        LayoutProperties = new LayoutProperties { DefaultBorderRadius = "18px" },
+        Typography = new Typography { Default = new Default { FontFamily = ["Inter", "Roboto", "Helvetica", "Arial", "sans-serif"] } }
     };
-
-    private void ToggleDrawer()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        _authState = await Auth.GetAuthStateAsync();
-    }
-
-    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin/requests", forceLoad: true);
-
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+    protected override async Task OnInitializedAsync() => _authState = await Auth.GetAuthStateAsync();
+    private void CloseDrawerOnMobile() { }
+    private void Login() => Navigation.NavigateTo("/.auth/login/aad?post_login_redirect_uri=/admin", forceLoad: true);
     private void Logout() => Navigation.NavigateTo("/.auth/logout?post_logout_redirect_uri=/", forceLoad: true);
 }

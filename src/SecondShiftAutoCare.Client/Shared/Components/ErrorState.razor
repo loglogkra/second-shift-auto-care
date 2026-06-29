@@ -1,0 +1,12 @@
+<MudPaper Elevation="0" Class="state-card state-card--error pa-5">
+    <MudStack Row="true" AlignItems="AlignItems.FlexStart" Spacing="2">
+        <MudIcon Icon="@Icons.Material.Filled.ReportProblem" Color="Color.Error" />
+        <div>
+            <MudText Typo="Typo.h6">@Title</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">@Message</MudText>
+            @if (!string.IsNullOrWhiteSpace(StatusCode)) { <MudChip T="string" Size="Size.Small" Class="mt-2">Status @StatusCode</MudChip> }
+            @if (OnRetry.HasDelegate) { <MudButton OnClick="OnRetry" Color="Color.Primary" Variant="Variant.Filled" Class="mt-3">Retry</MudButton> }
+        </div>
+    </MudStack>
+</MudPaper>
+@code { [Parameter] public string Title { get; set; } = "Something went wrong"; [Parameter] public string Message { get; set; } = "Please try again."; [Parameter] public string? StatusCode { get; set; } [Parameter] public EventCallback OnRetry { get; set; } }

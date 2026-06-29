@@ -1,0 +1,5 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" role="status" aria-live="polite">
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+    <MudText Typo="Typo.body2">@Text</MudText>
+</MudStack>
+@code { [Parameter] public string Text { get; set; } = "Loading..."; }

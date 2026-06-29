@@ -1,66 +1,20 @@
 @page "/"
 <PageTitle>2nd Shift Auto Care</PageTitle>
 
-<MudGrid Spacing="4" AlignItems="Center">
-    <MudItem xs="12" md="7">
-        <MudPaper Class="pa-5 pa-md-8 hero-card" Elevation="0">
-            <MudStack Spacing="3">
-                <div class="hero-brand-lockup">
-                    <div class="hero-logo-line" aria-hidden="true">
-                        <span class="hero-logo-line__car"></span>
-                        <span class="hero-logo-line__moon"></span>
-                        <span class="hero-logo-line__star hero-logo-line__star--one"></span>
-                        <span class="hero-logo-line__star hero-logo-line__star--two"></span>
-                    </div>
-                    <div class="hero-wordmark"><span>2ND</span> Shift</div>
-                    <div class="hero-service">Auto Care</div>
-                    <div class="hero-tagline">After-hours & weekend auto service</div>
-                </div>
-                <MudStack Row="true" Spacing="1" Class="flex-wrap">
-                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.DarkMode">After-hours and weekend auto service</MudChip>
-                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Icon="@Icons.Material.Filled.Place">Zeeland / West Michigan</MudChip>
-                </MudStack>
-                <MudText Typo="Typo.h3" Class="hero-title">2nd Shift Auto Care</MudText>
-                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="hero-subtitle">Practical maintenance and common repairs scheduled around your workday.</MudText>
-                <MudText Typo="Typo.body1" Class="hero-copy">
-                    Submit a request, tell us what is going on with your vehicle, and we will follow up before any work begins.
-                    Built for busy drivers who need straightforward service options outside normal shop hours.
-                </MudText>
-                <MudStack Row="true" Spacing="2" Class="flex-wrap">
-                    <MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.Handyman">Request Service</MudButton>
-                    <MudButton Href="/admin/requests" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Large" StartIcon="@Icons.Material.Filled.Speed">Admin Requests</MudButton>
-                </MudStack>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
+<MudStack Spacing="5">
+    <MudPaper Elevation="0" Class="hero-card pa-5 pa-md-8">
+        <MudGrid Spacing="4" AlignItems="Center"><MudItem xs="12" md="7"><MudStack Spacing="3"><MudChip T="string" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Small" Icon="@Icons.Material.Filled.NightsStay">Zeeland / West Michigan</MudChip><MudText Typo="Typo.h2" Class="hero-title">After-hours auto care</MudText><MudText Typo="Typo.h6" Class="hero-subtitle">Evening and weekend auto service requests for busy West Michigan drivers.</MudText><MudText Class="hero-copy">Tell us what your vehicle needs, share when you’re available, and get a practical quote before work begins.</MudText><MudStack Row="true" Class="flex-wrap" Spacing="2"><MudButton Href="/request-service" Color="Color.Secondary" Variant="Variant.Filled" Size="Size.Large" StartIcon="@Icons.Material.Filled.Handyman">Request Service</MudButton><MudButton Href="#how-it-works" Color="Color.Inherit" Variant="Variant.Outlined" Size="Size.Large">How it works</MudButton></MudStack></MudStack></MudItem><MudItem xs="12" md="5"><MudPaper Elevation="0" Class="hero-side pa-4"><BrandMark Class="hero-brand-mark" /><MudText Typo="Typo.h4"><span class="teal">2nd</span> Shift Auto Care</MudText><MudText>After-hours & weekend auto service</MudText></MudPaper></MudItem></MudGrid>
+    </MudPaper>
 
-    <MudItem xs="12" md="5">
-        <MudStack Spacing="3">
-            <MudCard Elevation="0" Class="feature-card">
-                <MudCardContent>
-                    <MudText Typo="Typo.h5" GutterBottom="true">How it works</MudText>
-                    <MudList T="string" Dense="true" Class="clean-list">
-                        <MudListItem Icon="@Icons.Material.Filled.DriveFileRenameOutline">Send the vehicle, symptoms, and availability.</MudListItem>
-                        <MudListItem Icon="@Icons.Material.Filled.MarkChatUnread">We review and contact you with next steps.</MudListItem>
-                        <MudListItem Icon="@Icons.Material.Filled.Verified">You approve the plan before service begins.</MudListItem>
-                    </MudList>
-                </MudCardContent>
-            </MudCard>
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Info">
-                MVP portal for Zeeland and West Michigan customers requesting after-hours or weekend service.
-            </MudAlert>
-        </MudStack>
-    </MudItem>
-</MudGrid>
+    <section><MudText Typo="Typo.h4" GutterBottom="true">Services</MudText><MudGrid Spacing="3">@foreach (var service in Services) { <MudItem xs="12" sm="6" md="4"><MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@service.Icon" Color="Color.Primary" /><MudText Typo="Typo.h6">@service.Title</MudText><MudText Typo="Typo.body2" Color="Color.Secondary">@service.Copy</MudText></MudCardContent></MudCard></MudItem> }</MudGrid></section>
 
-<MudGrid Spacing="3" Class="mt-4">
-    <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.NightsStay" Color="Color.Primary" /><MudText Typo="Typo.h6">Evening-friendly</MudText><MudText Typo="Typo.body2">Share windows that work after your shift.</MudText></MudCardContent></MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.Construction" Color="Color.Primary" /><MudText Typo="Typo.h6">Common repairs</MudText><MudText Typo="Typo.body2">Oil, brakes, belts, plugs, and diagnostics.</MudText></MudCardContent></MudCard>
-    </MudItem>
-    <MudItem xs="12" sm="4">
-        <MudCard Elevation="0" Class="stat-card"><MudCardContent><MudIcon Icon="@Icons.Material.Filled.TaskAlt" Color="Color.Primary" /><MudText Typo="Typo.h6">Clear follow-up</MudText><MudText Typo="Typo.body2">Status updates keep requests organized.</MudText></MudCardContent></MudCard>
-    </MudItem>
-</MudGrid>
+    <section id="how-it-works"><MudText Typo="Typo.h4" GutterBottom="true">How it works</MudText><MudGrid Spacing="3">@foreach (var step in Steps.Select((s,i)=>(s,i))) { <MudItem xs="12" md="3"><MudPaper Elevation="0" Class="step-card pa-4"><MudAvatar Color="Color.Primary">@(step.i + 1)</MudAvatar><MudText Typo="Typo.h6" Class="mt-2">@step.s.Title</MudText><MudText Typo="Typo.body2" Color="Color.Secondary">@step.s.Copy</MudText></MudPaper></MudItem> }</MudGrid></section>
+
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="trust-note" Icon="@Icons.Material.Filled.Info">Not emergency roadside service. Evening and weekend availability varies, and some jobs may be declined if unsafe or outside scope.</MudAlert>
+</MudStack>
+
+@code {
+    private sealed record Card(string Title, string Copy, string Icon);
+    private static readonly Card[] Services = [new("Oil changes", "Maintenance around your schedule.", Icons.Material.Filled.OilBarrel), new("Brakes / rotors", "Practical brake service review and quotes.", Icons.Material.Filled.Settings), new("Starters", "No-start concerns reviewed before parts are ordered.", Icons.Material.Filled.ElectricBolt), new("Suspension diagnosis", "Noise, ride, and handling checks.", Icons.Material.Filled.Build), new("General diagnosis", "Common issues triaged with clear next steps.", Icons.Material.Filled.Search)];
+    private static readonly Card[] Steps = [new("Submit request", "Share vehicle, symptoms, and availability.", ""), new("Get reviewed", "We decide if the job fits the scope.", ""), new("Receive quote", "Approve the plan before work starts.", ""), new("Schedule service", "Find an evening or weekend window.", "")];
+}
