@@ -1,0 +1,8 @@
+<MudPaper Elevation="0" Class="request-mini pa-3 mb-2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <div><MudText Typo="Typo.subtitle2">@Request.CustomerName</MudText><MudText Typo="Typo.caption" Color="Color.Secondary">@Request.VehicleYear @Request.VehicleMake @Request.VehicleModel • @Request.ServiceType</MudText>@if (ShowSchedule) { <MudText Typo="Typo.caption" Class="d-block">@Request.ScheduledStartUtc?.ToLocalTime().ToString("MMM d, h:mm tt")</MudText> }</div>
+        <MudSpacer />
+        <MudButton Href="@($"/admin/requests/{Request.Id}")" Size="Size.Small" Variant="Variant.Outlined">View</MudButton>
+    </MudStack>
+</MudPaper>
+@code { [Parameter, EditorRequired] public ServiceRequestDto Request { get; set; } = new(); [Parameter] public bool ShowSchedule { get; set; } }

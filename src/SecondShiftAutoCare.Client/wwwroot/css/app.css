@@ -146,3 +146,38 @@ body { background: var(--brand-background); color: var(--brand-steel-light); }
     from { transform: rotate(-20deg); }
     to { transform: rotate(20deg); }
 }
+
+/* 2nd Shift Auto Care polished product theme */
+:root { --ssac-navy:#0B1D3A; --ssac-graphite:#2B2F36; --ssac-steel:#7B8794; --ssac-teal:#00B2C7; --ssac-amber:#F5A623; --ssac-bg:#F7F4EE; --ssac-card:#FFFFFF; --ssac-dark:#171C24; --ssac-line:rgba(123,135,148,.24); --ssac-shadow:0 14px 34px rgba(11,29,58,.08); }
+html, body, #app { min-height:100%; overflow-x:hidden; }
+body { background:var(--ssac-bg) !important; color:var(--ssac-graphite) !important; }
+.mud-button-root { border-radius:999px !important; text-transform:none !important; font-weight:700 !important; }
+.mud-card, .mud-paper { border-radius:18px; }
+.app-bar { background:linear-gradient(90deg,var(--ssac-navy),#102A52) !important; border-bottom:1px solid rgba(245,166,35,.32) !important; min-height:68px; }
+.brand-name,.drawer-brand { color:#fff; font-weight:900; line-height:1; text-transform:none; letter-spacing:.01em; }
+.drawer-brand { color:var(--ssac-navy); }
+.brand-name span,.drawer-brand span,.teal { color:var(--ssac-teal); }
+.brand-subtitle { color:rgba(255,255,255,.78); }
+.app-drawer { background:rgba(255,255,255,.96) !important; border-right:1px solid var(--ssac-line) !important; backdrop-filter:blur(12px); }
+.drawer-header { background:linear-gradient(145deg,#fff,rgba(0,178,199,.08)) !important; color:var(--ssac-graphite) !important; border-bottom:1px solid var(--ssac-line) !important; }
+.drawer-footer { margin-top:auto; padding:1rem 1.25rem; color:var(--ssac-steel); border-top:1px solid var(--ssac-line); display:grid; gap:.25rem; }
+.main-content { background:radial-gradient(circle at top left,rgba(0,178,199,.14),transparent 24rem),radial-gradient(circle at 90% 5%,rgba(245,166,35,.16),transparent 22rem),var(--ssac-bg) !important; min-height:100vh; }
+.content-container { padding:92px 18px 36px !important; }
+.nav-menu { padding-top:.75rem; }
+.nav-menu .mud-nav-link { border-radius:999px; margin:.25rem 0; color:var(--ssac-graphite) !important; min-height:44px; }
+.nav-menu .mud-nav-link.active:not(.mud-nav-link-disabled) { background:rgba(0,178,199,.12) !important; color:var(--ssac-navy) !important; border-left:5px solid var(--ssac-amber); font-weight:800; }
+.nav-menu .mud-nav-link.active .mud-nav-link-icon { color:var(--ssac-teal) !important; }
+.nav-section { color:var(--ssac-steel) !important; font-weight:900; letter-spacing:.08em; }
+.top-cta { color:var(--ssac-navy) !important; background:var(--ssac-amber) !important; box-shadow:0 8px 20px rgba(245,166,35,.22) !important; }
+.hero-card { background:linear-gradient(135deg,var(--ssac-navy),#142D54 62%,var(--ssac-dark)) !important; color:#fff; border:1px solid rgba(245,166,35,.25); box-shadow:0 18px 42px rgba(11,29,58,.20) !important; }
+.hero-title { font-size:clamp(2.4rem,7vw,5rem) !important; line-height:.98; color:#fff; font-weight:900; }
+.hero-subtitle { color:#FFE0A3 !important; font-weight:700; }
+.hero-copy { color:rgba(255,255,255,.86); font-size:1.08rem; }
+.hero-side { background:rgba(255,255,255,.09) !important; color:#fff; border:1px solid rgba(255,255,255,.16); text-align:center; }
+.hero-brand-mark { width:96px; height:96px; margin:0 auto 1rem; }
+.feature-card,.stat-card,.form-card,.submitted-card,.detail-card,.action-card,.board-stat,.dashboard-panel,.metric-card,.request-card,.state-card,.loading-card,.filter-bar,.auth-card,.step-card { background:var(--ssac-card) !important; border:1px solid var(--ssac-line) !important; box-shadow:var(--ssac-shadow) !important; border-radius:18px !important; }
+.metric-card { height:100%; overflow:hidden; position:relative; }
+.metric-card:before { content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--ssac-teal); }.metric-card--amber:before{background:var(--ssac-amber)}.metric-card--green:before{background:#2E7D32}.metric-card--navy:before{background:var(--ssac-navy)}
+.dashboard-panel { min-height:100%; }.request-mini { background:#fbfcfd !important; box-shadow:none !important; }.request-card { height:100%; }.loading-card,.state-card,.auth-card { max-width:920px; margin:auto; }.rounded-skeleton { border-radius:16px; }.offline-banner { background:#fff8e6; border:1px solid rgba(245,166,35,.5); color:var(--ssac-graphite); padding:.75rem 1rem; border-radius:14px; margin-bottom:1rem; }.offline-banner button { border:0; background:var(--ssac-navy); color:#fff; border-radius:999px; padding:.35rem .8rem; margin-left:.5rem; }
+.loading-screen { background:radial-gradient(circle at 50% 30%,rgba(0,178,199,.22),transparent 24rem),var(--ssac-navy) !important; color:#fff !important; }.loading-screen__text { color:#fff !important; letter-spacing:.06em !important; text-transform:none !important; }.loading-screen__text:after { content:"Starting 2nd Shift Auto Care..."; display:block; color:rgba(255,255,255,.76); font-size:.85rem; margin-top:.35rem; }
+@media (max-width:700px){ .brand-subtitle,.signed-in-email{display:none!important}.content-container{padding:84px 12px 28px!important}.top-cta{display:none}.app-bar{min-height:64px}.mud-typography-h3{font-size:2rem!important}.hero-card{border-radius:18px!important}.mud-table-cell{padding:10px!important} }

@@ -16,6 +16,10 @@
     <MudItem xs="12" lg="8">
         <MudCard Elevation="0" Class="form-card">
             <MudCardContent>
+                @if (_isSubmitting)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-4" />
+                }
                 @if (!string.IsNullOrWhiteSpace(_errorMessage))
                 {
                     <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>

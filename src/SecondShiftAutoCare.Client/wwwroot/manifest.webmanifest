@@ -1,22 +1,20 @@
 {
-  "name": "Second Shift Auto Care",
-  "short_name": "Second Shift",
-  "start_url": ".",
+  "name": "2nd Shift Auto Care",
+  "short_name": "2nd Shift",
+  "description": "After-hours and weekend auto service requests for Zeeland and West Michigan.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0F1217",
-  "theme_color": "#44688E",
+  "orientation": "portrait-primary",
+  "background_color": "#0B1D3A",
+  "theme_color": "#0B1D3A",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "/icons/ssac-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }

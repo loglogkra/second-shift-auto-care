@@ -1,0 +1,7 @@
+<MudPaper Elevation="0" Class="state-card pa-6 text-center">
+    <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" />
+    <MudText Typo="Typo.h5" Class="mt-2">@Title</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="my-2">@Message</MudText>
+    @if (!string.IsNullOrWhiteSpace(ButtonText) && !string.IsNullOrWhiteSpace(Href)) { <MudButton Href="@Href" Variant="Variant.Filled" Color="Color.Primary">@ButtonText</MudButton> }
+</MudPaper>
+@code { [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Inbox; [Parameter] public string Title { get; set; } = "Nothing here yet"; [Parameter] public string Message { get; set; } = "New items will appear here."; [Parameter] public string? ButtonText { get; set; } [Parameter] public string? Href { get; set; } }
